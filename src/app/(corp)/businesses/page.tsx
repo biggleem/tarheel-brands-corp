@@ -153,10 +153,10 @@ export default function BusinessesPage() {
             const statusLabel = orgActive ? 'Active' : 'Inactive'
             const orgName = biz.organization?.name ?? 'Unknown'
             const location = parseLocation(biz.organization?.address as Record<string, unknown>)
-            const orgId = biz.organization?.id ?? biz.organization_id
+            const slug = biz.organization?.slug ?? biz.organization_id
 
             return (
-              <Link key={biz.id} href={`/businesses/${orgId}`} className="glass-card p-5 hover:border-brand-600/30 transition-all group">
+              <Link key={biz.id} href={`/businesses/${slug}`} className="glass-card p-5 hover:border-brand-600/30 transition-all group">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-dark-100 group-hover:text-white transition-colors truncate">{orgName}</h3>

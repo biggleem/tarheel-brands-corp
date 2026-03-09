@@ -287,6 +287,72 @@ export async function getBusinessDetail(orgId: string) {
   }
 }
 
+export async function getBusinessBySlug(slug: string) {
+  try {
+    const db = corpClient()
+
+    // First get the org by slug
+    const { data: org, error: orgError } = await db
+      .from('organizations')
+      .select('*')
+      .eq('slug', slug)
+      .single()
+
+    if (orgError || !org) {
+      console.error('getBusinessBySlug org error:', orgError)
+      return { organization: null, business: null, staff: [], documents: [], bills: [] }
+    }
+
+    const orgId = org.id
+
+    // Fetch business, staff, documents, bills in parallel
+    const [bizRes, staffRes, docsRes, billsRes] = await Promise.all([
+      db
+        .from('businesses')
+        .select('*')
+        .eq('organization_id', orgId)
+        .single(),
+      db
+        .from('staff_assignments')
+        .select(`
+          *,
+          staff:staff_profiles (
+            id, first_name, last_name, email, phone, employment_type, pay_type, pay_rate, avatar_url, is_active
+          )
+        `)
+        .eq('organization_id', orgId)
+        .eq('is_active', true),
+      db
+        .from('documents')
+        .select(`
+          *,
+          document_type:document_types (*),
+          staff:staff_profiles (id, first_name, last_name)
+        `)
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      db
+        .from('bills')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('status', 'pending')
+        .order('due_date', { ascending: true }),
+    ])
+
+    return {
+      organization: org as Organization,
+      business: bizRes.data as Business | null,
+      staff: (staffRes.data || []) as (StaffAssignment & { staff: StaffProfile })[],
+      documents: (docsRes.data || []) as Document[],
+      bills: (billsRes.data || []) as Bill[],
+    }
+  } catch (err) {
+    console.error('getBusinessBySlug error:', err)
+    return { organization: null, business: null, staff: [], documents: [], bills: [] }
+  }
+}
+
 export async function getOrganizationTree() {
   try {
     const db = corpClient()
