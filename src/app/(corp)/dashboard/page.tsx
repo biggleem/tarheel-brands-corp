@@ -10,6 +10,7 @@ import {
   getRevenueExpenseData,
   getRecentActivity,
   getBills,
+  getToastMonthlySales,
 } from '@/lib/supabase/queries'
 import type { AuditLog, StaffProfile, Bill, Organization } from '@/lib/types'
 import {
@@ -63,16 +64,12 @@ type OverdueBill = Bill & {
   organization: Pick<Organization, 'id' | 'name'>
 }
 
-// ── Static Data (no per-category revenue query yet) ───────
-
-const revenueByCategoryData = [
-  { category: 'food_beverage', label: 'Food & Bev', revenue: 18400 },
-  { category: 'tech_blockchain', label: 'Tech', revenue: 8200 },
-  { category: 'tours', label: 'Tours', revenue: 6800 },
-  { category: 'events', label: 'Events', revenue: 5400 },
-  { category: 'services', label: 'Services', revenue: 5200 },
-  { category: 'retail', label: 'Retail', revenue: 4200 },
-]
+type MonthlySalesRow = {
+  month: string
+  net_sales: number
+  total_orders: number
+  total_guests: number
+}
 
 const quickActions = [
   { label: 'Add Business', href: '/businesses?action=new', icon: Building2, color: 'text-blue-400' },
@@ -186,22 +183,25 @@ export default function DashboardPage() {
   const [revenueData, setRevenueData] = useState<RevenueExpenseRow[]>([])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [overdueBillsList, setOverdueBillsList] = useState<OverdueBill[]>([])
+  const [monthlySales, setMonthlySales] = useState<MonthlySalesRow[]>([])
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const [dashStats, revExp, recent, bills] = await Promise.all([
+        const [dashStats, revExp, recent, bills, toastMonthly] = await Promise.all([
           getDashboardStats(),
           getRevenueExpenseData(6),
           getRecentActivity(5),
           getBills({ status: 'overdue' }),
+          getToastMonthlySales(12),
         ])
         if (!cancelled) {
           setStats(dashStats)
           setRevenueData(revExp)
           setActivity(recent as ActivityEntry[])
           setOverdueBillsList(bills as OverdueBill[])
+          setMonthlySales(toastMonthly as MonthlySalesRow[])
         }
       } catch (err) {
         console.error('Dashboard load error:', err)
@@ -273,17 +273,30 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-dark-200 mb-4">Revenue by Category</h3>
+          <h3 className="text-sm font-medium text-dark-200 mb-4">Monthly POS Sales (Toast)</h3>
           <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={revenueByCategoryData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
-                <XAxis dataKey="label" stroke="#525252" tick={{ fill: '#737373', fontSize: 11 }} />
-                <YAxis stroke="#525252" tick={{ fill: '#737373', fontSize: 12 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="revenue" name="Revenue" fill="#C8102E" radius={[4, 4, 0, 0]} maxBarSize={48} />
-              </BarChart>
-            </ResponsiveContainer>
+            {monthlySales.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sm text-dark-500">No Toast POS data yet</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={monthlySales
+                    .sort((a, b) => a.month.localeCompare(b.month))
+                    .map((r) => ({
+                      ...r,
+                      label: formatMonthLabel(r.month.slice(0, 7)),
+                      revenue: r.net_sales,
+                    }))}
+                  margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#262626" />
+                  <XAxis dataKey="label" stroke="#525252" tick={{ fill: '#737373', fontSize: 11 }} />
+                  <YAxis stroke="#525252" tick={{ fill: '#737373', fontSize: 12 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Bar dataKey="revenue" name="Net Sales" fill="#C8102E" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>

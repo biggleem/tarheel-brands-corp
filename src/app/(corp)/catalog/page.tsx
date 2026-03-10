@@ -48,18 +48,7 @@ interface MockCatalogItem {
   supplier: string
 }
 
-const catalogItems: MockCatalogItem[] = [
-  { id: '1', name: 'Brisket (Choice Grade)', sku: 'MT-BRI-001', category: 'Meat', unitCost: 8.49, currentStock: 45, reorderLevel: 20, supplier: 'Sysco Foods' },
-  { id: '2', name: 'Burger Patties 6oz', sku: 'MT-PAT-002', category: 'Meat', unitCost: 3.25, currentStock: 180, reorderLevel: 100, supplier: 'US Foods' },
-  { id: '3', name: 'BBQ Sauce (Gallon)', sku: 'SC-BBQ-001', category: 'Sauces', unitCost: 12.99, currentStock: 8, reorderLevel: 10, supplier: 'Sysco Foods' },
-  { id: '4', name: 'Disposable Gloves (Box)', sku: 'CL-GLV-001', category: 'Cleaning', unitCost: 14.50, currentStock: 24, reorderLevel: 12, supplier: 'Restaurant Depot' },
-  { id: '5', name: 'Frozen Fruit Mix (5lb)', sku: 'FR-MIX-001', category: 'Produce', unitCost: 18.75, currentStock: 32, reorderLevel: 15, supplier: 'Sysco Foods' },
-  { id: '6', name: 'Burger Buns (24ct)', sku: 'BK-BUN-001', category: 'Bakery', unitCost: 6.99, currentStock: 5, reorderLevel: 20, supplier: 'US Foods' },
-  { id: '7', name: 'Degreaser Spray (Case)', sku: 'CL-DGR-001', category: 'Cleaning', unitCost: 42.00, currentStock: 6, reorderLevel: 4, supplier: 'Restaurant Depot' },
-  { id: '8', name: 'Paper Towel Rolls (12pk)', sku: 'CL-PTW-001', category: 'Cleaning', unitCost: 28.99, currentStock: 3, reorderLevel: 8, supplier: 'Restaurant Depot' },
-  { id: '9', name: 'Chicken Wings (10lb)', sku: 'MT-WNG-001', category: 'Meat', unitCost: 22.50, currentStock: 60, reorderLevel: 25, supplier: 'US Foods' },
-  { id: '10', name: 'Thermometer (Digital)', sku: 'EQ-THM-001', category: 'Equipment', unitCost: 34.99, currentStock: 4, reorderLevel: 2, supplier: 'WebstaurantStore' },
-]
+const catalogItems: MockCatalogItem[] = []
 
 interface MockPO {
   id: string
@@ -71,13 +60,7 @@ interface MockPO {
   itemCount: number
 }
 
-const purchaseOrders: MockPO[] = [
-  { id: '1', poNumber: 'PO-2026-042', supplier: 'Sysco Foods', date: '2026-03-06', status: 'confirmed', total: 2847.50, itemCount: 12 },
-  { id: '2', poNumber: 'PO-2026-041', supplier: 'US Foods', date: '2026-03-04', status: 'shipped', total: 1620.00, itemCount: 8 },
-  { id: '3', poNumber: 'PO-2026-040', supplier: 'Restaurant Depot', date: '2026-03-01', status: 'received', total: 892.30, itemCount: 15 },
-  { id: '4', poNumber: 'PO-2026-039', supplier: 'WebstaurantStore', date: '2026-02-28', status: 'received', total: 456.97, itemCount: 3 },
-  { id: '5', poNumber: 'PO-2026-043', supplier: 'Sysco Foods', date: '2026-03-08', status: 'draft', total: 3210.00, itemCount: 18 },
-]
+const purchaseOrders: MockPO[] = []
 
 // ── Page Component ─────────────────────────────────────────
 
@@ -152,120 +135,152 @@ export default function CatalogPage() {
           </div>
 
           {/* Catalog Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredItems.map((item) => {
-              const belowReorder = item.currentStock < item.reorderLevel
-              return (
-                <div key={item.id} className="glass-card p-4 flex flex-col gap-3">
-                  {/* Image Placeholder */}
-                  <div className="w-full h-28 bg-dark-800/60 rounded-lg flex items-center justify-center">
-                    <ImageIcon className="w-8 h-8 text-dark-600" />
-                  </div>
-
-                  {/* Info */}
-                  <div>
-                    <h4 className="text-sm font-medium text-dark-100 truncate">{item.name}</h4>
-                    <p className="text-[10px] font-mono text-dark-500 mt-0.5">{item.sku}</p>
-                  </div>
-
-                  {/* Details */}
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-400">Category</span>
-                      <span className="text-dark-200">{item.category}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-400">Unit Cost</span>
-                      <span className="text-dark-200 font-mono">{formatCurrency(item.unitCost)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-400">Stock</span>
-                      <span className={cn('font-mono font-medium', belowReorder ? 'text-red-400' : 'text-dark-200')}>
-                        {item.currentStock}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-400">Reorder Level</span>
-                      <span className="text-dark-300 font-mono">{item.reorderLevel}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-dark-400">Supplier</span>
-                      <span className="text-dark-200 truncate ml-2">{item.supplier}</span>
-                    </div>
-                  </div>
-
-                  {/* Low Stock Warning */}
-                  {belowReorder && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
-                      <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                      <span className="text-[10px] font-medium text-red-400">Below reorder level</span>
-                    </div>
-                  )}
+          {catalogItems.length === 0 ? (
+            <div className="glass-card p-16 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-dark-800/60 flex items-center justify-center">
+                  <Package className="w-7 h-7 text-dark-500" />
                 </div>
-              )
-            })}
-          </div>
-
-          {filteredItems.length === 0 && (
-            <div className="glass-card p-12 text-center">
-              <Package className="w-10 h-10 text-dark-500 mx-auto mb-3" />
-              <p className="text-sm text-dark-400">No items match your search.</p>
+                <div>
+                  <p className="text-sm font-medium text-dark-300">No items in catalog</p>
+                  <p className="text-xs text-dark-500 mt-1">Add your first inventory item to get started.</p>
+                </div>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredItems.map((item) => {
+                  const belowReorder = item.currentStock < item.reorderLevel
+                  return (
+                    <div key={item.id} className="glass-card p-4 flex flex-col gap-3">
+                      {/* Image Placeholder */}
+                      <div className="w-full h-28 bg-dark-800/60 rounded-lg flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-dark-600" />
+                      </div>
+
+                      {/* Info */}
+                      <div>
+                        <h4 className="text-sm font-medium text-dark-100 truncate">{item.name}</h4>
+                        <p className="text-[10px] font-mono text-dark-500 mt-0.5">{item.sku}</p>
+                      </div>
+
+                      {/* Details */}
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Category</span>
+                          <span className="text-dark-200">{item.category}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Unit Cost</span>
+                          <span className="text-dark-200 font-mono">{formatCurrency(item.unitCost)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Stock</span>
+                          <span className={cn('font-mono font-medium', belowReorder ? 'text-red-400' : 'text-dark-200')}>
+                            {item.currentStock}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Reorder Level</span>
+                          <span className="text-dark-300 font-mono">{item.reorderLevel}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Supplier</span>
+                          <span className="text-dark-200 truncate ml-2">{item.supplier}</span>
+                        </div>
+                      </div>
+
+                      {/* Low Stock Warning */}
+                      {belowReorder && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                          <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                          <span className="text-[10px] font-medium text-red-400">Below reorder level</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {filteredItems.length === 0 && (
+                <div className="glass-card p-12 text-center">
+                  <Package className="w-10 h-10 text-dark-500 mx-auto mb-3" />
+                  <p className="text-sm text-dark-400">No items match your search.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
 
       {/* ── Purchase Orders Tab ── */}
       {activeTab === 'orders' && (
-        <div className="glass-card p-5">
-          <div className="overflow-x-auto">
-            <table className="data-table w-full">
-              <thead>
-                <tr className="border-b border-dark-700/50">
-                  <th>PO #</th>
-                  <th>Supplier</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th className="text-right">Total</th>
-                  <th className="text-center">Items</th>
-                  <th className="text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchaseOrders.map((po) => {
-                  const statusInfo = poStatusConfig[po.status]
-                  const StatusIcon = statusInfo.icon
-                  return (
-                    <tr key={po.id}>
-                      <td className="font-mono text-xs text-dark-100 font-medium">{po.poNumber}</td>
-                      <td className="text-dark-200">{po.supplier}</td>
-                      <td className="whitespace-nowrap">{formatDate(po.date)}</td>
-                      <td>
-                        <span
-                          className={cn(
-                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                            statusInfo.bg,
-                            statusInfo.color
-                          )}
-                        >
-                          <StatusIcon className="w-3 h-3" />
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                      <td className="text-right font-mono font-medium text-dark-100">{formatCurrency(po.total)}</td>
-                      <td className="text-center text-dark-300">{po.itemCount}</td>
-                      <td className="text-center">
-                        <button className="p-1.5 rounded-lg hover:bg-dark-700 transition-colors text-dark-400 hover:text-dark-200">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </td>
+        <>
+          {purchaseOrders.length === 0 ? (
+            <div className="glass-card p-16 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-dark-800/60 flex items-center justify-center">
+                  <ShoppingCart className="w-7 h-7 text-dark-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-dark-300">No purchase orders yet</p>
+                  <p className="text-xs text-dark-500 mt-1">Create your first purchase order to start tracking supply orders.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="glass-card p-5">
+              <div className="overflow-x-auto">
+                <table className="data-table w-full">
+                  <thead>
+                    <tr className="border-b border-dark-700/50">
+                      <th>PO #</th>
+                      <th>Supplier</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th className="text-right">Total</th>
+                      <th className="text-center">Items</th>
+                      <th className="text-center">Actions</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                  </thead>
+                  <tbody>
+                    {purchaseOrders.map((po) => {
+                      const statusInfo = poStatusConfig[po.status]
+                      const StatusIcon = statusInfo.icon
+                      return (
+                        <tr key={po.id}>
+                          <td className="font-mono text-xs text-dark-100 font-medium">{po.poNumber}</td>
+                          <td className="text-dark-200">{po.supplier}</td>
+                          <td className="whitespace-nowrap">{formatDate(po.date)}</td>
+                          <td>
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                                statusInfo.bg,
+                                statusInfo.color
+                              )}
+                            >
+                              <StatusIcon className="w-3 h-3" />
+                              {statusInfo.label}
+                            </span>
+                          </td>
+                          <td className="text-right font-mono font-medium text-dark-100">{formatCurrency(po.total)}</td>
+                          <td className="text-center text-dark-300">{po.itemCount}</td>
+                          <td className="text-center">
+                            <button className="p-1.5 rounded-lg hover:bg-dark-700 transition-colors text-dark-400 hover:text-dark-200">
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

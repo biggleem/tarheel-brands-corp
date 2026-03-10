@@ -55,12 +55,7 @@ interface MockPlan {
   goalsCompleted: number
 }
 
-const plans: MockPlan[] = [
-  { id: '1', name: 'Brax BBQ Q1 Growth', business: 'Brax BBQ', quarter: 1, year: 2026, status: 'active', budget: 5000, goalsTotal: 6, goalsCompleted: 3 },
-  { id: '2', name: 'Tarheel Burger Spring Push', business: 'Tarheel Burger', quarter: 1, year: 2026, status: 'active', budget: 3500, goalsTotal: 4, goalsCompleted: 1 },
-  { id: '3', name: 'SA Smoothie Summer Launch', business: 'SA Smoothie', quarter: 2, year: 2026, status: 'draft', budget: 4200, goalsTotal: 5, goalsCompleted: 0 },
-  { id: '4', name: 'The Kickback Q2 Events', business: 'The Kickback', quarter: 2, year: 2026, status: 'draft', budget: 6000, goalsTotal: 8, goalsCompleted: 0 },
-]
+const plans: MockPlan[] = []
 
 interface CalendarEvent {
   id: string
@@ -70,14 +65,7 @@ interface CalendarEvent {
   assignedTo: string
 }
 
-const calendarEvents: CalendarEvent[] = [
-  { id: '1', title: 'March Madness Email Blast', channel: 'Email', date: '2026-03-05', assignedTo: 'Angela D.' },
-  { id: '2', title: 'New Menu Social Posts', channel: 'Social', date: '2026-03-10', assignedTo: 'Tyler B.' },
-  { id: '3', title: 'Double Points Weekend', channel: 'In-Store', date: '2026-03-15', assignedTo: 'Kayla S.' },
-  { id: '4', title: 'Spring Launch SMS', channel: 'SMS', date: '2026-03-18', assignedTo: 'Marcus T.' },
-  { id: '5', title: 'Live Music Night Promo', channel: 'Event', date: '2026-03-22', assignedTo: 'Jordan M.' },
-  { id: '6', title: 'Easter Special Campaign', channel: 'Email', date: '2026-03-28', assignedTo: 'Angela D.' },
-]
+const calendarEvents: CalendarEvent[] = []
 
 // ── Helper for Calendar ────────────────────────────────────
 
@@ -124,62 +112,74 @@ export default function MarketingPage() {
       />
 
       {/* ── Plans Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {plans.map((plan) => {
-          const statusInfo = statusConfig[plan.status]
-          const progressPct = plan.goalsTotal > 0 ? (plan.goalsCompleted / plan.goalsTotal) * 100 : 0
+      {plans.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {plans.map((plan) => {
+            const statusInfo = statusConfig[plan.status]
+            const progressPct = plan.goalsTotal > 0 ? (plan.goalsCompleted / plan.goalsTotal) * 100 : 0
 
-          return (
-            <div key={plan.id} className="glass-card p-5 flex flex-col gap-4">
-              <div className="flex items-start justify-between">
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-dark-100 truncate">{plan.name}</h3>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
-                        statusInfo.bg,
-                        statusInfo.color
-                      )}
-                    >
-                      {statusInfo.label}
-                    </span>
+            return (
+              <div key={plan.id} className="glass-card p-5 flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-dark-100 truncate">{plan.name}</h3>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
+                          statusInfo.bg,
+                          statusInfo.color
+                        )}
+                      >
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-dark-400 whitespace-nowrap">Q{plan.quarter} {plan.year}</span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>{plan.business}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>Budget: {formatCurrency(plan.budget)}</span>
                   </div>
                 </div>
-                <span className="text-xs text-dark-400 whitespace-nowrap">Q{plan.quarter} {plan.year}</span>
-              </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-dark-400">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>{plan.business}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-dark-400">
-                  <DollarSign className="w-3.5 h-3.5" />
-                  <span>Budget: {formatCurrency(plan.budget)}</span>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-dark-400">Goals Progress</span>
-                  <span className="text-dark-300">{plan.goalsCompleted}/{plan.goalsTotal} completed</span>
-                </div>
-                <div className="w-full h-2 bg-dark-800 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all',
-                      progressPct >= 100 ? 'bg-green-500' : progressPct > 0 ? 'bg-brand-600' : 'bg-dark-700'
-                    )}
-                    style={{ width: `${progressPct}%` }}
-                  />
+                {/* Progress */}
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-dark-400">Goals Progress</span>
+                    <span className="text-dark-300">{plan.goalsCompleted}/{plan.goalsTotal} completed</span>
+                  </div>
+                  <div className="w-full h-2 bg-dark-800 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all',
+                        progressPct >= 100 ? 'bg-green-500' : progressPct > 0 ? 'bg-brand-600' : 'bg-dark-700'
+                      )}
+                      style={{ width: `${progressPct}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="glass-card p-12 flex flex-col items-center justify-center text-center">
+          <div className="p-3 rounded-xl bg-dark-800/60 mb-4">
+            <Target className="w-8 h-8 text-dark-500" />
+          </div>
+          <h3 className="text-sm font-semibold text-dark-200 mb-1">No marketing plans yet</h3>
+          <p className="text-xs text-dark-500 max-w-xs">
+            Create your first quarterly marketing plan to start tracking budgets, goals, and campaigns across your brands.
+          </p>
+        </div>
+      )}
 
       {/* ── Marketing Calendar ── */}
       <div className="glass-card p-5">
@@ -253,40 +253,52 @@ export default function MarketingPage() {
       {/* ── Calendar Events List ── */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-dark-200 mb-4">Upcoming Events</h3>
-        <div className="space-y-1">
-          {calendarEvents.map((evt) => {
-            const ch = channelConfig[evt.channel] || { color: 'text-dark-300', bg: 'bg-dark-700/30' }
-            return (
-              <div
-                key={evt.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-dark-800/40 transition-colors"
-              >
-                <div className="p-1.5 rounded-lg bg-dark-800">
-                  <Calendar className="w-4 h-4 text-dark-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-dark-100">{evt.title}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
-                        ch.bg,
-                        ch.color
-                      )}
-                    >
-                      {evt.channel}
-                    </span>
-                    <span className="text-xs text-dark-500">{formatDate(evt.date)}</span>
+        {calendarEvents.length > 0 ? (
+          <div className="space-y-1">
+            {calendarEvents.map((evt) => {
+              const ch = channelConfig[evt.channel] || { color: 'text-dark-300', bg: 'bg-dark-700/30' }
+              return (
+                <div
+                  key={evt.id}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-dark-800/40 transition-colors"
+                >
+                  <div className="p-1.5 rounded-lg bg-dark-800">
+                    <Calendar className="w-4 h-4 text-dark-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-dark-100">{evt.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium',
+                          ch.bg,
+                          ch.color
+                        )}
+                      >
+                        {evt.channel}
+                      </span>
+                      <span className="text-xs text-dark-500">{formatDate(evt.date)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-dark-400">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{evt.assignedTo}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-dark-400">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>{evt.assignedTo}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="py-10 flex flex-col items-center justify-center text-center">
+            <div className="p-3 rounded-xl bg-dark-800/60 mb-4">
+              <Calendar className="w-8 h-8 text-dark-500" />
+            </div>
+            <h3 className="text-sm font-semibold text-dark-200 mb-1">No upcoming events</h3>
+            <p className="text-xs text-dark-500 max-w-xs">
+              Schedule campaigns and events to see them appear on your marketing calendar.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

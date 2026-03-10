@@ -48,9 +48,9 @@ const statusConfig: Record<CampaignStatus, { label: string; color: string; bg: s
 
 type FilterTab = 'all' | CampaignStatus
 
-// ── Mock Data ──────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────
 
-interface MockCampaign {
+interface Campaign {
   id: string
   name: string
   type: CampaignType
@@ -64,86 +64,7 @@ interface MockCampaign {
   business: string
 }
 
-const campaigns: MockCampaign[] = [
-  {
-    id: '1',
-    name: 'March Madness BBQ Special',
-    type: 'email',
-    status: 'active',
-    startDate: '2026-03-01',
-    endDate: '2026-03-31',
-    budget: 500,
-    sent: 2840,
-    opened: 1420,
-    clicked: 380,
-    business: 'Brax BBQ',
-  },
-  {
-    id: '2',
-    name: 'Spring Smoothie Launch',
-    type: 'social',
-    status: 'scheduled',
-    startDate: '2026-03-15',
-    endDate: '2026-04-15',
-    budget: 1200,
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    business: 'SA Smoothie',
-  },
-  {
-    id: '3',
-    name: 'Double Points Weekend',
-    type: 'rewards_bonus',
-    status: 'completed',
-    startDate: '2026-02-22',
-    endDate: '2026-02-24',
-    budget: 0,
-    sent: 1360,
-    opened: 980,
-    clicked: 624,
-    business: 'All Businesses',
-  },
-  {
-    id: '4',
-    name: 'New Menu Alert',
-    type: 'sms',
-    status: 'draft',
-    startDate: '2026-03-20',
-    endDate: '2026-03-30',
-    budget: 250,
-    sent: 0,
-    opened: 0,
-    clicked: 0,
-    business: 'Tarheel Burger',
-  },
-  {
-    id: '5',
-    name: 'Kickback Live Music Promo',
-    type: 'email',
-    status: 'active',
-    startDate: '2026-03-05',
-    endDate: '2026-03-19',
-    budget: 300,
-    sent: 1840,
-    opened: 920,
-    clicked: 248,
-    business: 'The Kickback',
-  },
-  {
-    id: '6',
-    name: 'Loyalty Member 20% Off',
-    type: 'discount',
-    status: 'paused',
-    startDate: '2026-03-01',
-    endDate: '2026-03-15',
-    budget: 800,
-    sent: 680,
-    opened: 510,
-    clicked: 162,
-    business: 'Cafe 1876',
-  },
-]
+const campaigns: Campaign[] = []
 
 // ── Page Component ─────────────────────────────────────────
 
@@ -194,93 +115,142 @@ export default function CampaignsPage() {
         ))}
       </div>
 
-      {/* ── Campaign Cards Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((campaign) => {
-          const typeInfo = typeConfig[campaign.type]
-          const statusInfo = statusConfig[campaign.status]
-          const TypeIcon = typeInfo.icon
-          const openRate = campaign.sent > 0 ? ((campaign.opened / campaign.sent) * 100).toFixed(1) : '0.0'
-          const clickRate = campaign.sent > 0 ? ((campaign.clicked / campaign.sent) * 100).toFixed(1) : '0.0'
-
-          return (
-            <div key={campaign.id} className="glass-card p-5 flex flex-col gap-4">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-dark-100 truncate">{campaign.name}</h3>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <span
-                      className={cn(
-                        'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
-                        typeInfo.bg,
-                        typeInfo.color
-                      )}
-                    >
-                      <TypeIcon className="w-3 h-3" />
-                      {typeInfo.label}
-                    </span>
-                    <span
-                      className={cn(
-                        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
-                        statusInfo.bg,
-                        statusInfo.color
-                      )}
-                    >
-                      {statusInfo.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-dark-400">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-dark-400">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>{campaign.business}</span>
-                </div>
-                {campaign.budget > 0 && (
-                  <div className="flex items-center gap-2 text-xs text-dark-400">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    <span>Budget: {formatCurrency(campaign.budget)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Metrics */}
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-dark-700/30">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
-                    <Send className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider">Sent</span>
-                  </div>
-                  <p className="text-sm font-semibold text-dark-100">{campaign.sent.toLocaleString()}</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
-                    <Eye className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider">Opened</span>
-                  </div>
-                  <p className="text-sm font-semibold text-dark-100">{openRate}%</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
-                    <MousePointerClick className="w-3 h-3" />
-                    <span className="text-[10px] uppercase tracking-wider">Clicked</span>
-                  </div>
-                  <p className="text-sm font-semibold text-dark-100">{clickRate}%</p>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="glass-card p-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
+            <Megaphone className="w-4 h-4" />
+            <span className="text-[10px] uppercase tracking-wider font-medium">Total</span>
+          </div>
+          <p className="text-2xl font-bold text-dark-100">{campaigns.length}</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
+            <Send className="w-4 h-4" />
+            <span className="text-[10px] uppercase tracking-wider font-medium">Sent</span>
+          </div>
+          <p className="text-2xl font-bold text-dark-100">0</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
+            <Eye className="w-4 h-4" />
+            <span className="text-[10px] uppercase tracking-wider font-medium">Opened</span>
+          </div>
+          <p className="text-2xl font-bold text-dark-100">0%</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
+            <MousePointerClick className="w-4 h-4" />
+            <span className="text-[10px] uppercase tracking-wider font-medium">Clicked</span>
+          </div>
+          <p className="text-2xl font-bold text-dark-100">0%</p>
+        </div>
       </div>
 
-      {filtered.length === 0 && (
+      {/* ── Campaign Cards Grid ── */}
+      {filtered.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((campaign) => {
+            const typeInfo = typeConfig[campaign.type]
+            const statusInfo = statusConfig[campaign.status]
+            const TypeIcon = typeInfo.icon
+            const openRate = campaign.sent > 0 ? ((campaign.opened / campaign.sent) * 100).toFixed(1) : '0.0'
+            const clickRate = campaign.sent > 0 ? ((campaign.clicked / campaign.sent) * 100).toFixed(1) : '0.0'
+
+            return (
+              <div key={campaign.id} className="glass-card p-5 flex flex-col gap-4">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-dark-100 truncate">{campaign.name}</h3>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
+                          typeInfo.bg,
+                          typeInfo.color
+                        )}
+                      >
+                        <TypeIcon className="w-3 h-3" />
+                        {typeInfo.label}
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
+                          statusInfo.bg,
+                          statusInfo.color
+                        )}
+                      >
+                        {statusInfo.label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <Building2 className="w-3.5 h-3.5" />
+                    <span>{campaign.business}</span>
+                  </div>
+                  {campaign.budget > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-dark-400">
+                      <DollarSign className="w-3.5 h-3.5" />
+                      <span>Budget: {formatCurrency(campaign.budget)}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Metrics */}
+                <div className="grid grid-cols-3 gap-2 pt-3 border-t border-dark-700/30">
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
+                      <Send className="w-3 h-3" />
+                      <span className="text-[10px] uppercase tracking-wider">Sent</span>
+                    </div>
+                    <p className="text-sm font-semibold text-dark-100">{campaign.sent.toLocaleString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
+                      <Eye className="w-3 h-3" />
+                      <span className="text-[10px] uppercase tracking-wider">Opened</span>
+                    </div>
+                    <p className="text-sm font-semibold text-dark-100">{openRate}%</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
+                      <MousePointerClick className="w-3 h-3" />
+                      <span className="text-[10px] uppercase tracking-wider">Clicked</span>
+                    </div>
+                    <p className="text-sm font-semibold text-dark-100">{clickRate}%</p>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : campaigns.length === 0 ? (
+        <div className="glass-card p-16 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-dark-800/60 border border-dark-700/40 mb-5">
+            <Megaphone className="w-8 h-8 text-dark-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-dark-200 mb-2">No campaigns yet</h3>
+          <p className="text-sm text-dark-400 max-w-sm mx-auto mb-6">
+            Create your first marketing campaign to get started. Reach customers through email, SMS, social media, and more.
+          </p>
+          <Link
+            href="/campaigns/new"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Create Campaign
+          </Link>
+        </div>
+      ) : (
         <div className="glass-card p-12 text-center">
           <Megaphone className="w-10 h-10 text-dark-500 mx-auto mb-3" />
           <p className="text-sm text-dark-400">No campaigns found for this filter.</p>

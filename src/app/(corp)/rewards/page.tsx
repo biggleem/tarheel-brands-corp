@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
@@ -31,42 +31,43 @@ const tierConfig: Record<RewardsTier, { label: string; color: string; bg: string
   platinum: { label: 'Platinum', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Gem },
 }
 
-// ── Mock Data ──────────────────────────────────────────────
+// ── Data (empty until Supabase tables are populated) ─────
 
-const tierBreakdown = [
-  { tier: 'bronze' as RewardsTier, count: 842 },
-  { tier: 'silver' as RewardsTier, count: 356 },
-  { tier: 'gold' as RewardsTier, count: 124 },
-  { tier: 'platinum' as RewardsTier, count: 38 },
-]
+const tierBreakdown: { tier: RewardsTier; count: number }[] = []
 
-const members = [
-  { id: '1', firstName: 'Angela', lastName: 'Davis', email: 'angela.d@email.com', tier: 'platinum' as RewardsTier, pointsBalance: 12450, lifetimePoints: 48200, lastVisit: '2026-03-07', joinedAt: '2024-06-15' },
-  { id: '2', firstName: 'Marcus', lastName: 'Thompson', email: 'mthompson@email.com', tier: 'gold' as RewardsTier, pointsBalance: 4820, lifetimePoints: 22100, lastVisit: '2026-03-08', joinedAt: '2024-09-22' },
-  { id: '3', firstName: 'Keisha', lastName: 'Williams', email: 'keisha.w@email.com', tier: 'gold' as RewardsTier, pointsBalance: 3640, lifetimePoints: 18500, lastVisit: '2026-03-05', joinedAt: '2024-11-10' },
-  { id: '4', firstName: 'DeShawn', lastName: 'Carter', email: 'dcarter@email.com', tier: 'silver' as RewardsTier, pointsBalance: 1890, lifetimePoints: 8400, lastVisit: '2026-03-06', joinedAt: '2025-01-18' },
-  { id: '5', firstName: 'Jasmine', lastName: 'Robinson', email: 'jrobinson@email.com', tier: 'silver' as RewardsTier, pointsBalance: 1240, lifetimePoints: 6200, lastVisit: '2026-03-04', joinedAt: '2025-03-02' },
-  { id: '6', firstName: 'Tyler', lastName: 'Brooks', email: 'tbrooks@email.com', tier: 'bronze' as RewardsTier, pointsBalance: 680, lifetimePoints: 3100, lastVisit: '2026-03-03', joinedAt: '2025-05-14' },
-  { id: '7', firstName: 'Aaliyah', lastName: 'Green', email: 'aaliyah.g@email.com', tier: 'bronze' as RewardsTier, pointsBalance: 420, lifetimePoints: 1800, lastVisit: '2026-02-28', joinedAt: '2025-07-20' },
-  { id: '8', firstName: 'Jordan', lastName: 'Mitchell', email: 'jmitchell@email.com', tier: 'platinum' as RewardsTier, pointsBalance: 9870, lifetimePoints: 52400, lastVisit: '2026-03-08', joinedAt: '2024-04-01' },
-  { id: '9', firstName: 'Kayla', lastName: 'Stewart', email: 'kstewart@email.com', tier: 'silver' as RewardsTier, pointsBalance: 2100, lifetimePoints: 9800, lastVisit: '2026-03-01', joinedAt: '2025-02-11' },
-  { id: '10', firstName: 'Brandon', lastName: 'Harris', email: 'bharris@email.com', tier: 'bronze' as RewardsTier, pointsBalance: 150, lifetimePoints: 650, lastVisit: '2026-02-20', joinedAt: '2025-11-30' },
-]
+const members: {
+  id: string; firstName: string; lastName: string; email: string;
+  tier: RewardsTier; pointsBalance: number; lifetimePoints: number;
+  lastVisit: string; joinedAt: string;
+}[] = []
 
-const recentTransactions = [
-  { id: '1', memberName: 'Marcus Thompson', type: 'earn' as RewardsTransactionType, points: 180, description: 'Dine-in purchase at Brax BBQ', date: '2026-03-08' },
-  { id: '2', memberName: 'Angela Davis', type: 'redeem' as RewardsTransactionType, points: -500, description: 'Free dessert reward', date: '2026-03-07' },
-  { id: '3', memberName: 'Jordan Mitchell', type: 'earn' as RewardsTransactionType, points: 320, description: 'Catering order at The Kickback', date: '2026-03-07' },
-  { id: '4', memberName: 'Keisha Williams', type: 'earn' as RewardsTransactionType, points: 95, description: 'Takeout from Tarheel Burger', date: '2026-03-06' },
-  { id: '5', memberName: 'DeShawn Carter', type: 'redeem' as RewardsTransactionType, points: -250, description: 'Buy 1 Get 1 Free coupon', date: '2026-03-06' },
-  { id: '6', memberName: 'Tyler Brooks', type: 'earn' as RewardsTransactionType, points: 64, description: 'SA Smoothie purchase', date: '2026-03-05' },
-  { id: '7', memberName: 'Angela Davis', type: 'earn' as RewardsTransactionType, points: 425, description: 'VIP dining experience at Brax BBQ', date: '2026-03-05' },
-  { id: '8', memberName: 'Jasmine Robinson', type: 'redeem' as RewardsTransactionType, points: -100, description: '$10 off next order', date: '2026-03-04' },
-]
+const recentTransactions: {
+  id: string; memberName: string; type: RewardsTransactionType;
+  points: number; description: string; date: string;
+}[] = []
 
 // ── Page Component ─────────────────────────────────────────
 
 export default function RewardsPage() {
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Simulates data fetch — swap with real Supabase query later
+    const t = setTimeout(() => setLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-dark-400">Loading rewards data...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
@@ -84,29 +85,25 @@ export default function RewardsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Members"
-          value="1,360"
-          change={6.2}
+          value="0"
           icon={Users}
           iconColor="text-blue-400"
         />
         <StatCard
           title="Active Members"
-          value="1,148"
-          change={4.8}
+          value="0"
           icon={Award}
           iconColor="text-green-400"
         />
         <StatCard
           title="Points Issued (MTD)"
-          value="48,600"
-          change={12.3}
+          value="0"
           icon={TrendingUp}
           iconColor="text-brand-400"
         />
         <StatCard
           title="Points Redeemed (MTD)"
-          value="18,200"
-          change={8.1}
+          value="0"
           icon={Gift}
           iconColor="text-gold-400"
         />
@@ -115,137 +112,167 @@ export default function RewardsPage() {
       {/* ── Tier Breakdown ── */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-dark-200 mb-4">Tier Breakdown</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {tierBreakdown.map(({ tier, count }) => {
-            const config = tierConfig[tier]
-            const TierIcon = config.icon
-            const total = tierBreakdown.reduce((acc, t) => acc + t.count, 0)
-            const pct = ((count / total) * 100).toFixed(1)
-            return (
-              <div
-                key={tier}
-                className={cn('flex items-center gap-3 p-4 rounded-xl border', config.bg, config.border)}
-              >
-                <div className={cn('p-2 rounded-lg bg-dark-900', config.color)}>
-                  <TierIcon className="w-5 h-5" />
+        {tierBreakdown.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {tierBreakdown.map(({ tier, count }) => {
+              const config = tierConfig[tier]
+              const TierIcon = config.icon
+              const total = tierBreakdown.reduce((acc, t) => acc + t.count, 0)
+              const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'
+              return (
+                <div
+                  key={tier}
+                  className={cn('flex items-center gap-3 p-4 rounded-xl border', config.bg, config.border)}
+                >
+                  <div className={cn('p-2 rounded-lg bg-dark-900', config.color)}>
+                    <TierIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className={cn('text-lg font-display font-bold', config.color)}>{count.toLocaleString()}</p>
+                    <p className="text-xs text-dark-400">
+                      {config.label} &bull; {pct}%
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className={cn('text-lg font-display font-bold', config.color)}>{count.toLocaleString()}</p>
-                  <p className="text-xs text-dark-400">
-                    {config.label} &bull; {pct}%
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="p-3 rounded-xl bg-dark-800/60 mb-3">
+              <Crown className="w-6 h-6 text-dark-500" />
+            </div>
+            <p className="text-sm font-medium text-dark-300">No tier data yet</p>
+            <p className="text-xs text-dark-500 mt-1">Members will appear across tiers as they enroll</p>
+          </div>
+        )}
       </div>
 
       {/* ── Members Table ── */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-dark-200 mb-4">Members</h3>
-        <div className="overflow-x-auto">
-          <table className="data-table w-full">
-            <thead>
-              <tr className="border-b border-dark-700/50">
-                <th>Name</th>
-                <th>Email</th>
-                <th>Tier</th>
-                <th className="text-right">Points Balance</th>
-                <th className="text-right">Lifetime Points</th>
-                <th>Last Visit</th>
-                <th>Joined</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member) => {
-                const config = tierConfig[member.tier]
-                const TierIcon = config.icon
-                return (
-                  <tr key={member.id}>
-                    <td className="text-dark-100 font-medium whitespace-nowrap">
-                      {member.firstName} {member.lastName}
-                    </td>
-                    <td className="text-dark-300 text-xs">{member.email}</td>
-                    <td>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                          config.bg,
-                          config.color
-                        )}
-                      >
-                        <TierIcon className="w-3 h-3" />
-                        {config.label}
-                      </span>
-                    </td>
-                    <td className="text-right font-mono text-dark-100">
-                      {member.pointsBalance.toLocaleString()}
-                    </td>
-                    <td className="text-right font-mono text-dark-300">
-                      {member.lifetimePoints.toLocaleString()}
-                    </td>
-                    <td className="whitespace-nowrap">{formatDate(member.lastVisit)}</td>
-                    <td className="whitespace-nowrap text-dark-400">{formatDate(member.joinedAt)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        {members.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="data-table w-full">
+              <thead>
+                <tr className="border-b border-dark-700/50">
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Tier</th>
+                  <th className="text-right">Points Balance</th>
+                  <th className="text-right">Lifetime Points</th>
+                  <th>Last Visit</th>
+                  <th>Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((member) => {
+                  const config = tierConfig[member.tier]
+                  const TierIcon = config.icon
+                  return (
+                    <tr key={member.id}>
+                      <td className="text-dark-100 font-medium whitespace-nowrap">
+                        {member.firstName} {member.lastName}
+                      </td>
+                      <td className="text-dark-300 text-xs">{member.email}</td>
+                      <td>
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                            config.bg,
+                            config.color
+                          )}
+                        >
+                          <TierIcon className="w-3 h-3" />
+                          {config.label}
+                        </span>
+                      </td>
+                      <td className="text-right font-mono text-dark-100">
+                        {member.pointsBalance.toLocaleString()}
+                      </td>
+                      <td className="text-right font-mono text-dark-300">
+                        {member.lifetimePoints.toLocaleString()}
+                      </td>
+                      <td className="whitespace-nowrap">{formatDate(member.lastVisit)}</td>
+                      <td className="whitespace-nowrap text-dark-400">{formatDate(member.joinedAt)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="p-3 rounded-xl bg-dark-800/60 mb-3">
+              <Users className="w-6 h-6 text-dark-500" />
+            </div>
+            <p className="text-sm font-medium text-dark-300">No rewards members yet</p>
+            <p className="text-xs text-dark-500 mt-1">Members will appear here once they enroll in the loyalty program</p>
+          </div>
+        )}
       </div>
 
       {/* ── Recent Rewards Transactions ── */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-dark-200 mb-4">Recent Rewards Activity</h3>
-        <div className="space-y-1">
-          {recentTransactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-dark-800/40 transition-colors"
-            >
+        {recentTransactions.length > 0 ? (
+          <div className="space-y-1">
+            {recentTransactions.map((tx) => (
               <div
-                className={cn(
-                  'p-1.5 rounded-lg',
-                  tx.type === 'earn' ? 'bg-green-500/10' : 'bg-gold-400/10'
-                )}
+                key={tx.id}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-dark-800/40 transition-colors"
               >
-                {tx.type === 'earn' ? (
-                  <ArrowUpRight className="w-4 h-4 text-green-400" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-gold-400" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-dark-100">{tx.memberName}</span>
-                  <span
-                    className={cn(
-                      'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
-                      tx.type === 'earn'
-                        ? 'bg-green-500/10 text-green-400'
-                        : 'bg-gold-400/10 text-gold-400'
-                    )}
-                  >
-                    {tx.type}
-                  </span>
-                </div>
-                <p className="text-xs text-dark-400 truncate">{tx.description}</p>
-              </div>
-              <div className="text-right">
-                <p
+                <div
                   className={cn(
-                    'text-sm font-mono font-semibold',
-                    tx.type === 'earn' ? 'text-green-400' : 'text-gold-400'
+                    'p-1.5 rounded-lg',
+                    tx.type === 'earn' ? 'bg-green-500/10' : 'bg-gold-400/10'
                   )}
                 >
-                  {tx.points > 0 ? '+' : ''}{tx.points.toLocaleString()} pts
-                </p>
-                <p className="text-xs text-dark-500">{formatDate(tx.date)}</p>
+                  {tx.type === 'earn' ? (
+                    <ArrowUpRight className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <ArrowDownRight className="w-4 h-4 text-gold-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-dark-100">{tx.memberName}</span>
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider',
+                        tx.type === 'earn'
+                          ? 'bg-green-500/10 text-green-400'
+                          : 'bg-gold-400/10 text-gold-400'
+                      )}
+                    >
+                      {tx.type}
+                    </span>
+                  </div>
+                  <p className="text-xs text-dark-400 truncate">{tx.description}</p>
+                </div>
+                <div className="text-right">
+                  <p
+                    className={cn(
+                      'text-sm font-mono font-semibold',
+                      tx.type === 'earn' ? 'text-green-400' : 'text-gold-400'
+                    )}
+                  >
+                    {tx.points > 0 ? '+' : ''}{tx.points.toLocaleString()} pts
+                  </p>
+                  <p className="text-xs text-dark-500">{formatDate(tx.date)}</p>
+                </div>
               </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="p-3 rounded-xl bg-dark-800/60 mb-3">
+              <Award className="w-6 h-6 text-dark-500" />
             </div>
-          ))}
-        </div>
+            <p className="text-sm font-medium text-dark-300">No recent transactions</p>
+            <p className="text-xs text-dark-500 mt-1">Points earned and redeemed will show up here</p>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -51,128 +51,7 @@ const statusConfig: Record<POStatus, { label: string; icon: typeof Clock; color:
 
 // ── Mock Data ──────────────────────────────────────────────
 
-const mockOrders: PurchaseOrder[] = [
-  {
-    id: 'po-001',
-    poNumber: 'PO-2026-0042',
-    vendor: 'Sysco Foods Charlotte',
-    business: 'Tarheel Kitchen',
-    itemsCount: 18,
-    totalAmount: 3842.50,
-    status: 'submitted',
-    createdDate: '2026-03-07',
-    expectedDate: '2026-03-12',
-    notes: 'Weekly food supply order',
-  },
-  {
-    id: 'po-002',
-    poNumber: 'PO-2026-0041',
-    vendor: 'US Foods',
-    business: 'Tarheel Kitchen',
-    itemsCount: 12,
-    totalAmount: 2180.00,
-    status: 'received',
-    createdDate: '2026-03-03',
-    expectedDate: '2026-03-07',
-    notes: 'Frozen goods and dry storage items',
-  },
-  {
-    id: 'po-003',
-    poNumber: 'PO-2026-0040',
-    vendor: 'Cintas',
-    business: 'Tarheel Kitchen',
-    itemsCount: 6,
-    totalAmount: 420.00,
-    status: 'received',
-    createdDate: '2026-03-01',
-    expectedDate: '2026-03-05',
-    notes: 'Cleaning supplies and uniforms',
-  },
-  {
-    id: 'po-004',
-    poNumber: 'PO-2026-0039',
-    vendor: 'WebstaurantStore',
-    business: 'Tarheel Kitchen',
-    itemsCount: 4,
-    totalAmount: 1860.00,
-    status: 'submitted',
-    createdDate: '2026-03-05',
-    expectedDate: '2026-03-15',
-    notes: 'Replacement small wares',
-  },
-  {
-    id: 'po-005',
-    poNumber: 'PO-2026-0038',
-    vendor: 'Staples Business',
-    business: 'Tarheel Brands Corp',
-    itemsCount: 8,
-    totalAmount: 312.45,
-    status: 'received',
-    createdDate: '2026-02-28',
-    expectedDate: '2026-03-04',
-    notes: 'Office supplies and printer cartridges',
-  },
-  {
-    id: 'po-006',
-    poNumber: 'PO-2026-0037',
-    vendor: 'Dart Container',
-    business: 'Tarheel Kitchen',
-    itemsCount: 5,
-    totalAmount: 645.80,
-    status: 'draft',
-    createdDate: '2026-03-08',
-    expectedDate: '',
-    notes: 'To-go containers and cups',
-  },
-  {
-    id: 'po-007',
-    poNumber: 'PO-2026-0036',
-    vendor: 'Gordon Food Service',
-    business: 'Tarheel Kitchen',
-    itemsCount: 22,
-    totalAmount: 4215.00,
-    status: 'cancelled',
-    createdDate: '2026-02-25',
-    expectedDate: '2026-03-01',
-    notes: 'Cancelled - switched to Sysco for better pricing',
-  },
-  {
-    id: 'po-008',
-    poNumber: 'PO-2026-0035',
-    vendor: 'Amazon Business',
-    business: 'Tarheel Brands Corp',
-    itemsCount: 3,
-    totalAmount: 189.99,
-    status: 'received',
-    createdDate: '2026-02-26',
-    expectedDate: '2026-03-02',
-    notes: 'Tech accessories for office',
-  },
-  {
-    id: 'po-009',
-    poNumber: 'PO-2026-0034',
-    vendor: 'Restaurant Depot',
-    business: 'Tarheel Kitchen',
-    itemsCount: 15,
-    totalAmount: 2890.00,
-    status: 'received',
-    createdDate: '2026-02-22',
-    expectedDate: '2026-02-24',
-    notes: 'Bulk food items - monthly restock',
-  },
-  {
-    id: 'po-010',
-    poNumber: 'PO-2026-0033',
-    vendor: 'EcoLab',
-    business: 'Tarheel Kitchen',
-    itemsCount: 7,
-    totalAmount: 528.00,
-    status: 'draft',
-    createdDate: '2026-03-08',
-    expectedDate: '',
-    notes: 'Sanitization and cleaning chemicals',
-  },
-]
+const mockOrders: PurchaseOrder[] = []
 
 // ── Page Component ─────────────────────────────────────────
 
@@ -328,84 +207,98 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* ── PO Table ── */}
-      <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full data-table">
-            <thead>
-              <tr className="border-b border-dark-800/50">
-                <th>PO Number</th>
-                <th>Vendor</th>
-                <th>Business</th>
-                <th className="text-center">Items</th>
-                <th className="text-right">Total</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th className="hidden lg:table-cell">Expected</th>
-                <th className="text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((order) => {
-                const stConfig = statusConfig[order.status]
-                const StIcon = stConfig.icon
-                return (
-                  <tr key={order.id}>
-                    <td className="font-mono text-sm text-dark-100 whitespace-nowrap">{order.poNumber}</td>
-                    <td className="text-dark-200 whitespace-nowrap">{order.vendor}</td>
-                    <td className="text-dark-300 text-xs whitespace-nowrap">{order.business}</td>
-                    <td className="text-center text-dark-300">
-                      <span className="inline-flex items-center gap-1">
-                        <Package className="w-3 h-3 text-dark-500" />
-                        {order.itemsCount}
-                      </span>
-                    </td>
-                    <td className="text-right font-mono text-dark-100 whitespace-nowrap">
-                      {formatCurrency(order.totalAmount)}
-                    </td>
-                    <td>
-                      <span className={cn('inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full', stConfig.bg, stConfig.color)}>
-                        <StIcon className="w-3 h-3" />
-                        {stConfig.label}
-                      </span>
-                    </td>
-                    <td className="text-dark-300 whitespace-nowrap text-xs">{formatDate(order.createdDate)}</td>
-                    <td className="hidden lg:table-cell text-dark-400 whitespace-nowrap text-xs">
-                      {order.expectedDate ? formatDate(order.expectedDate) : '--'}
-                    </td>
-                    <td>
-                      <div className="flex items-center justify-center gap-1">
-                        <button className="p-1.5 hover:bg-dark-800 rounded-lg transition-colors" title="View">
-                          <Eye className="w-3.5 h-3.5 text-dark-400" />
-                        </button>
-                        <button className="p-1.5 hover:bg-dark-800 rounded-lg transition-colors" title="Edit">
-                          <Edit3 className="w-3.5 h-3.5 text-dark-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="py-12 text-center">
-            <ShoppingCart className="w-8 h-8 text-dark-600 mx-auto mb-2" />
-            <p className="text-sm text-dark-400">No purchase orders match your filters.</p>
+      {mockOrders.length === 0 ? (
+        <div className="glass-card p-16 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-dark-800/60 flex items-center justify-center">
+              <ShoppingCart className="w-7 h-7 text-dark-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-dark-300">No purchase orders yet</p>
+              <p className="text-xs text-dark-500 mt-1">Create your first purchase order to start tracking supply orders.</p>
+            </div>
           </div>
-        )}
-
-        {/* Footer */}
-        <div className="px-4 py-3 border-t border-dark-800/50 flex items-center justify-between">
-          <p className="text-xs text-dark-500">
-            Showing {filtered.length} of {mockOrders.length} purchase orders
-          </p>
-          <span className="text-xs text-dark-500">
-            Total shown: <span className="text-dark-200 font-mono">{formatCurrency(filtered.reduce((s, o) => s + o.totalAmount, 0))}</span>
-          </span>
         </div>
-      </div>
+      ) : (
+        <div className="glass-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full data-table">
+              <thead>
+                <tr className="border-b border-dark-800/50">
+                  <th>PO Number</th>
+                  <th>Vendor</th>
+                  <th>Business</th>
+                  <th className="text-center">Items</th>
+                  <th className="text-right">Total</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th className="hidden lg:table-cell">Expected</th>
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((order) => {
+                  const stConfig = statusConfig[order.status]
+                  const StIcon = stConfig.icon
+                  return (
+                    <tr key={order.id}>
+                      <td className="font-mono text-sm text-dark-100 whitespace-nowrap">{order.poNumber}</td>
+                      <td className="text-dark-200 whitespace-nowrap">{order.vendor}</td>
+                      <td className="text-dark-300 text-xs whitespace-nowrap">{order.business}</td>
+                      <td className="text-center text-dark-300">
+                        <span className="inline-flex items-center gap-1">
+                          <Package className="w-3 h-3 text-dark-500" />
+                          {order.itemsCount}
+                        </span>
+                      </td>
+                      <td className="text-right font-mono text-dark-100 whitespace-nowrap">
+                        {formatCurrency(order.totalAmount)}
+                      </td>
+                      <td>
+                        <span className={cn('inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full', stConfig.bg, stConfig.color)}>
+                          <StIcon className="w-3 h-3" />
+                          {stConfig.label}
+                        </span>
+                      </td>
+                      <td className="text-dark-300 whitespace-nowrap text-xs">{formatDate(order.createdDate)}</td>
+                      <td className="hidden lg:table-cell text-dark-400 whitespace-nowrap text-xs">
+                        {order.expectedDate ? formatDate(order.expectedDate) : '--'}
+                      </td>
+                      <td>
+                        <div className="flex items-center justify-center gap-1">
+                          <button className="p-1.5 hover:bg-dark-800 rounded-lg transition-colors" title="View">
+                            <Eye className="w-3.5 h-3.5 text-dark-400" />
+                          </button>
+                          <button className="p-1.5 hover:bg-dark-800 rounded-lg transition-colors" title="Edit">
+                            <Edit3 className="w-3.5 h-3.5 text-dark-400" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="py-12 text-center">
+              <ShoppingCart className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+              <p className="text-sm text-dark-400">No purchase orders match your filters.</p>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-dark-800/50 flex items-center justify-between">
+            <p className="text-xs text-dark-500">
+              Showing {filtered.length} of {mockOrders.length} purchase orders
+            </p>
+            <span className="text-xs text-dark-500">
+              Total shown: <span className="text-dark-200 font-mono">{formatCurrency(filtered.reduce((s, o) => s + o.totalAmount, 0))}</span>
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
