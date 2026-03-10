@@ -789,6 +789,19 @@ export async function getStaffWithPermissions() {
 // Current User Helpers
 // ============================================================
 
+// ============================================================
+// Import Helpers
+// ============================================================
+
+export async function importBills(bills: Partial<Bill>[]) {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('import_corp_bills', {
+    p_bills: bills,
+  })
+  if (error) throw error
+  return data as { imported: number }
+}
+
 export async function getCurrentStaffProfile() {
   try {
     const supabase = createClient()

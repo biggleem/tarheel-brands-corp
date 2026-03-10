@@ -19,6 +19,7 @@ import {
   Search,
   Landmark,
   CreditCard,
+  Upload,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────
@@ -170,6 +171,13 @@ export default function BillsPage() {
         description="Track and manage all business bills and payments"
         actions={
           <div className="flex items-center gap-2">
+            <Link
+              href="/bills/import"
+              className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-dark-200 text-sm font-medium rounded-lg transition-colors border border-dark-700"
+            >
+              <Upload className="w-4 h-4" />
+              Import
+            </Link>
             <Link
               href="/bills/plaid"
               className="flex items-center gap-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-dark-200 text-sm font-medium rounded-lg transition-colors border border-dark-700"
