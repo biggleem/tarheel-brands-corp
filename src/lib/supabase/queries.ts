@@ -210,32 +210,31 @@ export async function getOrganizations() {
 
 export async function getBusinesses(filters?: BusinessFilters) {
   try {
-    const db = corpClient()
-    let query = db
-      .from('businesses')
-      .select(`
-        *,
-        organization:organizations!inner (
-          id, name, slug, org_type, is_active, address, phone, email, website
-        )
-      `)
-      .eq('is_active', true)
-
-    if (filters?.category) {
-      query = query.eq('category', filters.category)
-    }
-    if (filters?.search) {
-      query = query.or(`domain.ilike.%${filters.search}%,organization.name.ilike.%${filters.search}%`)
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false })
+    // Use public RPC to bypass corp schema exposure requirement
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('get_corp_businesses')
 
     if (error) {
-      console.error('getBusinesses error:', error)
+      console.error('getBusinesses RPC error:', error)
       return []
     }
 
-    return (data || []) as (Business & { organization: Organization })[]
+    let results = (data || []) as (Business & { organization: Organization })[]
+
+    // Apply client-side filters
+    if (filters?.category) {
+      results = results.filter((b) => b.category === filters.category)
+    }
+    if (filters?.search) {
+      const s = filters.search.toLowerCase()
+      results = results.filter(
+        (b) =>
+          b.domain?.toLowerCase().includes(s) ||
+          b.organization?.name?.toLowerCase().includes(s)
+      )
+    }
+
+    return results
   } catch (err) {
     console.error('getBusinesses error:', err)
     return []
@@ -289,63 +288,23 @@ export async function getBusinessDetail(orgId: string) {
 
 export async function getBusinessBySlug(slug: string) {
   try {
-    const db = corpClient()
+    // Use public RPC to bypass corp schema exposure requirement
+    const supabase = createClient()
+    const { data, error } = await supabase.rpc('get_corp_business_by_slug', { p_slug: slug })
 
-    // First get the org by slug
-    const { data: org, error: orgError } = await db
-      .from('organizations')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-
-    if (orgError || !org) {
-      console.error('getBusinessBySlug org error:', orgError)
+    if (error) {
+      console.error('getBusinessBySlug RPC error:', error)
       return { organization: null, business: null, staff: [], documents: [], bills: [] }
     }
 
-    const orgId = org.id
-
-    // Fetch business, staff, documents, bills in parallel
-    const [bizRes, staffRes, docsRes, billsRes] = await Promise.all([
-      db
-        .from('businesses')
-        .select('*')
-        .eq('organization_id', orgId)
-        .single(),
-      db
-        .from('staff_assignments')
-        .select(`
-          *,
-          staff:staff_profiles (
-            id, first_name, last_name, email, phone, employment_type, pay_type, pay_rate, avatar_url, is_active
-          )
-        `)
-        .eq('organization_id', orgId)
-        .eq('is_active', true),
-      db
-        .from('documents')
-        .select(`
-          *,
-          document_type:document_types (*),
-          staff:staff_profiles (id, first_name, last_name)
-        `)
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false })
-        .limit(10),
-      db
-        .from('bills')
-        .select('*')
-        .eq('organization_id', orgId)
-        .eq('status', 'pending')
-        .order('due_date', { ascending: true }),
-    ])
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = data as any
     return {
-      organization: org as Organization,
-      business: bizRes.data as Business | null,
-      staff: (staffRes.data || []) as (StaffAssignment & { staff: StaffProfile })[],
-      documents: (docsRes.data || []) as Document[],
-      bills: (billsRes.data || []) as Bill[],
+      organization: result?.organization as Organization | null,
+      business: result?.business as Business | null,
+      staff: (result?.staff || []) as (StaffAssignment & { staff: StaffProfile })[],
+      documents: (result?.documents || []) as Document[],
+      bills: (result?.bills || []) as Bill[],
     }
   } catch (err) {
     console.error('getBusinessBySlug error:', err)
