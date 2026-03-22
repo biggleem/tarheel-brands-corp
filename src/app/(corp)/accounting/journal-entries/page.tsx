@@ -87,7 +87,7 @@ const mockEntries: JournalEntryRow[] = [
     reference: 'JE-2026-0303-001',
     description: 'Office supplies purchase - Staples',
     source: 'plaid',
-    business: 'Tarheel Brands Corp',
+    business: 'South Armz Global Inc',
     debitTotal: 234.67,
     creditTotal: 234.67,
     status: 'draft',

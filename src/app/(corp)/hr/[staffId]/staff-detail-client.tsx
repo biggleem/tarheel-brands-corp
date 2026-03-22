@@ -66,7 +66,7 @@ const employeeDB: Record<string, EmployeeDetail> = {
   'staff-001': {
     id: 'staff-001', user_id: 'u1', employee_number: 'TBC-001',
     first_name: 'Marcus', last_name: 'Johnson',
-    personal_email: 'marcus.j@gmail.com', work_email: 'marcus@tarheelbrands.com',
+    personal_email: 'marcus.j@gmail.com', work_email: 'marcus@southarmzglobal.com',
     phone: '(919) 555-0142', date_of_birth: '1988-03-14',
     hire_date: '2021-06-01', employment_type: 'full_time',
     pay_rate: 72000, pay_type: 'salary', pay_frequency: 'biweekly',
@@ -79,7 +79,7 @@ const employeeDB: Record<string, EmployeeDetail> = {
   'staff-002': {
     id: 'staff-002', user_id: 'u2', employee_number: 'TBC-002',
     first_name: 'Aisha', last_name: 'Williams',
-    personal_email: 'aisha.w@gmail.com', work_email: 'aisha@tarheelbrands.com',
+    personal_email: 'aisha.w@gmail.com', work_email: 'aisha@southarmzglobal.com',
     phone: '(919) 555-0218', date_of_birth: '1992-07-22',
     hire_date: '2022-01-15', employment_type: 'full_time',
     pay_rate: 58000, pay_type: 'salary', pay_frequency: 'biweekly',
@@ -87,7 +87,7 @@ const employeeDB: Record<string, EmployeeDetail> = {
     status: 'active', avatar_url: null,
     emergency_contact_name: 'James Williams', emergency_contact_phone: '(919) 555-0220',
     metadata: {}, created_at: '2022-01-15', updated_at: '2024-11-20',
-    businesses: ['Tarheel Brands Corp'],
+    businesses: ['South Armz Global Inc'],
   },
 }
 
@@ -97,7 +97,7 @@ function getEmployee(staffId: string): EmployeeDetail {
   return {
     id: staffId, user_id: 'ux', employee_number: 'TBC-XXX',
     first_name: 'Devon', last_name: 'Carter',
-    personal_email: 'devon.c@gmail.com', work_email: 'devon@tarheelbrands.com',
+    personal_email: 'devon.c@gmail.com', work_email: 'devon@southarmzglobal.com',
     phone: '(336) 555-0187', date_of_birth: '1995-11-03',
     hire_date: '2022-08-20', employment_type: 'full_time',
     pay_rate: 18.50, pay_type: 'hourly', pay_frequency: 'biweekly',

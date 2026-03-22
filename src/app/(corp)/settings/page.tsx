@@ -98,7 +98,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
 
   // Organization form state (could be fetched from org data later)
-  const [orgName, setOrgName] = useState('Tarheel Brands Corp')
+  const [orgName, setOrgName] = useState('South Armz Global Inc')
   const [orgAddress, setOrgAddress] = useState('Pittsboro, NC')
   const [orgPhone, setOrgPhone] = useState('')
   const [orgEmail, setOrgEmail] = useState('')

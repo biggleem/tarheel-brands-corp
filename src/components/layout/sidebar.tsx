@@ -97,7 +97,7 @@ export function Sidebar() {
           </div>
           <div>
             <h1 className="font-display font-bold text-dark-50 text-sm leading-tight">
-              Tarheel Brands
+              South Armz Global
             </h1>
             <p className="text-[10px] text-dark-500 uppercase tracking-wider">Corp Manager</p>
           </div>

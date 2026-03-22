@@ -163,7 +163,7 @@ export default function HRStaffDirectoryPage() {
     <div className="animate-fade-in">
       <PageHeader
         title="HR / Staff Directory"
-        description="Manage your team across all Tarheel Brands businesses"
+        description="Manage your team across all businesses"
         actions={
           <button className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">
             <Plus className="w-4 h-4" />

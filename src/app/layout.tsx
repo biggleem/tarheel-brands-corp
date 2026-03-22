@@ -19,8 +19,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Tarheel Brands | Corporation Manager',
-  description: 'Enterprise management platform for South Armz Global & Tarheel Brands',
+  title: 'South Armz Global | Corporation Manager',
+  description: 'Enterprise management platform for South Armz Global Inc.',
 }
 
 export default function RootLayout({

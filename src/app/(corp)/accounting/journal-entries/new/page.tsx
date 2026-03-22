@@ -46,7 +46,7 @@ const coaAccounts = [
 ]
 
 const businesses = [
-  'Tarheel Brands Corp',
+  'South Armz Global Inc',
   'Tarheel Kitchen',
   'Tarheel Fitness',
   'Tarheel Media',

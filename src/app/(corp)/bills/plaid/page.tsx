@@ -168,7 +168,7 @@ const mockTransactions: PlaidTransaction[] = [
     category: ['Service', 'Advertising'],
     account: 'Spark ****3341',
     isCategorized: true,
-    assignedBusiness: 'Tarheel Brands Corp',
+    assignedBusiness: 'South Armz Global Inc',
     pending: false,
   },
   {
@@ -185,7 +185,7 @@ const mockTransactions: PlaidTransaction[] = [
 ]
 
 const businesses = [
-  'Tarheel Brands Corp',
+  'South Armz Global Inc',
   'Tarheel Kitchen',
   'Tarheel Fitness',
   'Tarheel Media',
