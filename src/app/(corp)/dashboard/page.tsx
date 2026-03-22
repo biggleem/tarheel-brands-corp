@@ -184,6 +184,8 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [overdueBillsList, setOverdueBillsList] = useState<OverdueBill[]>([])
   const [monthlySales, setMonthlySales] = useState<MonthlySalesRow[]>([])
+  const [revExpMonths, setRevExpMonths] = useState(6)
+  const [toastMonths, setToastMonths] = useState(12)
 
   useEffect(() => {
     let cancelled = false
@@ -191,10 +193,10 @@ export default function DashboardPage() {
       try {
         const [dashStats, revExp, recent, bills, toastMonthly] = await Promise.all([
           getDashboardStats(),
-          getRevenueExpenseData(6),
+          getRevenueExpenseData(revExpMonths),
           getRecentActivity(5),
           getBills({ status: 'overdue' }),
-          getToastMonthlySales(12),
+          getToastMonthlySales(toastMonths),
         ])
         if (!cancelled) {
           setStats(dashStats)
@@ -211,7 +213,7 @@ export default function DashboardPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [revExpMonths, toastMonths])
 
   if (loading) return <DashboardSkeleton />
 
@@ -247,7 +249,25 @@ export default function DashboardPage() {
       {/* ── Charts Row ── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-dark-200 mb-4">Revenue vs Expenses</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-dark-200">Revenue vs Expenses</h3>
+            <div className="flex gap-1">
+              {[3, 6, 12].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setRevExpMonths(m)}
+                  className={cn(
+                    'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
+                    revExpMonths === m
+                      ? 'bg-brand-600/15 text-brand-400 border border-brand-600/30'
+                      : 'bg-dark-800/60 text-dark-400 border border-dark-700/50 hover:text-dark-200'
+                  )}
+                >
+                  {m}mo
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
@@ -273,7 +293,25 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-dark-200 mb-4">Monthly POS Sales (Toast)</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-dark-200">Monthly POS Sales (Toast)</h3>
+            <div className="flex gap-1">
+              {[6, 12, 24, 48].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setToastMonths(m)}
+                  className={cn(
+                    'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
+                    toastMonths === m
+                      ? 'bg-brand-600/15 text-brand-400 border border-brand-600/30'
+                      : 'bg-dark-800/60 text-dark-400 border border-dark-700/50 hover:text-dark-200'
+                  )}
+                >
+                  {m}mo
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="h-72">
             {monthlySales.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-dark-500">No Toast POS data yet</div>

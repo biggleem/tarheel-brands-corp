@@ -6,6 +6,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'
 import { formatDate } from '@/lib/utils/formatters'
 import { getTimeEntriesRpc } from '@/lib/supabase/queries'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
 import {
   Clock,
   Users,
@@ -16,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  Search,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -245,6 +248,7 @@ export default function TimeTrackingPage() {
   const [rawEntries, setRawEntries] = useState<RawTimeEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [weekOffset, setWeekOffset] = useState(0) // 0 = current week
+  const [search, setSearch] = useState('')
 
   // Fetch time entries from Supabase RPC
   useEffect(() => {
@@ -313,6 +317,18 @@ export default function TimeTrackingPage() {
     })
   }, [weeklyData, statusOverrides])
 
+  // Search + sort
+  const searchFiltered = useMemo(() => {
+    if (!search) return data
+    const q = search.toLowerCase()
+    return data.filter((r) => r.name.toLowerCase().includes(q))
+  }, [data, search])
+
+  const { sortedData: sortedRows, sortConfig, requestSort } = useSortableData(
+    searchFiltered as unknown as Record<string, unknown>[],
+    { key: 'name', direction: 'asc' }
+  )
+
   // Stats
   const totalHours = data.reduce((s, r) => s + r.total, 0)
   const avgHours = data.length > 0 ? totalHours / data.length : 0
@@ -360,6 +376,17 @@ export default function TimeTrackingPage() {
         description="Weekly timesheet overview and approval"
         actions={
           <div className="flex items-center gap-3">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+              <input
+                type="text"
+                placeholder="Search employee..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-3 py-2 bg-dark-800/60 border border-dark-700/50 rounded-lg text-sm text-dark-200 placeholder:text-dark-500 focus:outline-none focus:border-brand-600/50 w-44"
+              />
+            </div>
             {/* Week navigator */}
             <div className="flex items-center gap-2 glass-card px-3 py-2">
               <button
@@ -409,12 +436,12 @@ export default function TimeTrackingPage() {
           <table className="w-full data-table">
             <thead>
               <tr className="border-b border-dark-700/50">
-                <th>Employee</th>
+                <SortableHeader label="Employee" sortKey="name" currentSort={sortConfig} onSort={requestSort} />
                 {dayLabels.map((d) => (
                   <th key={d} className="text-center">{d}</th>
                 ))}
-                <th className="text-center">Total</th>
-                <th>Status</th>
+                <SortableHeader label="Total" sortKey="total" currentSort={sortConfig} onSort={requestSort} className="text-center" />
+                <SortableHeader label="Status" sortKey="status" currentSort={sortConfig} onSort={requestSort} />
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
@@ -428,7 +455,7 @@ export default function TimeTrackingPage() {
                   </td>
                 </tr>
               ) : (
-                data.map((row) => (
+                (sortedRows as unknown as typeof data).map((row) => (
                   <tr key={row.staff_id}>
                     <td>
                       <div className="flex items-center gap-3">

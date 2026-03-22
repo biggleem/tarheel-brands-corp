@@ -5,10 +5,13 @@ import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
 import { formatDate } from '@/lib/utils/formatters'
 import { getPtoRequestsRpc } from '@/lib/supabase/queries'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
 import {
   Calendar,
   CheckCircle2,
   XCircle,
+  Search,
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -123,6 +126,7 @@ export default function PTORequestsPage() {
   const [requests, setRequests] = useState<PTORequestRow[]>([])
   const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -154,6 +158,20 @@ export default function PTORequestsPage() {
     if (activeFilter === 'all') return requests
     return requests.filter((r) => r.status === activeFilter)
   }, [requests, activeFilter])
+
+  const searchFiltered = useMemo(() => {
+    if (!search) return filtered
+    const q = search.toLowerCase()
+    return filtered.filter((r) =>
+      `${r.first_name} ${r.last_name}`.toLowerCase().includes(q) ||
+      r.pto_type.toLowerCase().includes(q)
+    )
+  }, [filtered, search])
+
+  const { sortedData: sortedRequests, sortConfig, requestSort } = useSortableData(
+    searchFiltered as unknown as Record<string, unknown>[],
+    { key: 'start_date', direction: 'desc' }
+  )
 
   const counts = useMemo(() => ({
     all: requests.length,
@@ -215,6 +233,18 @@ export default function PTORequestsPage() {
       </div>
 
       {/* Loading state */}
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+        <input
+          type="text"
+          placeholder="Search by employee or type..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9 pr-3 py-2 bg-dark-800/60 border border-dark-700/50 rounded-lg text-sm text-dark-200 placeholder:text-dark-500 focus:outline-none focus:border-brand-600/50 w-64"
+        />
+      </div>
+
       {loading && <TableSkeleton />}
 
       {/* Table */}
@@ -224,18 +254,18 @@ export default function PTORequestsPage() {
             <table className="w-full data-table">
               <thead>
                 <tr className="border-b border-dark-700/50">
-                  <th>Employee</th>
-                  <th>Type</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th className="text-center">Hours</th>
+                  <SortableHeader label="Employee" sortKey="first_name" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Type" sortKey="pto_type" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Start Date" sortKey="start_date" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="End Date" sortKey="end_date" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Hours" sortKey="total_hours" currentSort={sortConfig} onSort={requestSort} className="text-center" />
                   <th className="hidden lg:table-cell">Notes</th>
-                  <th>Status</th>
+                  <SortableHeader label="Status" sortKey="status" currentSort={sortConfig} onSort={requestSort} />
                   <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((req) => (
+                {(sortedRequests as unknown as PTORequestRow[]).map((req) => (
                   <tr key={req.id}>
                     <td>
                       <div className="flex items-center gap-3">
@@ -323,7 +353,7 @@ export default function PTORequestsPage() {
           {/* Footer */}
           <div className="px-4 py-3 border-t border-dark-800/50 flex items-center justify-between">
             <p className="text-xs text-dark-500">
-              Showing {filtered.length} of {requests.length} requests
+              Showing {sortedRequests.length} of {requests.length} requests
             </p>
           </div>
         </div>

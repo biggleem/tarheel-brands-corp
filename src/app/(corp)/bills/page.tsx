@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
 import { getBills } from '@/lib/supabase/queries'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
 import type { Bill, BillStatus, Organization } from '@/lib/types'
 import {
   Plus,
@@ -148,6 +150,19 @@ export default function BillsPage() {
     })
   }, [bills, activeTab, search])
 
+  const sortableBills = useMemo(() =>
+    filtered.map((b) => ({
+      ...b,
+      _amount: b.total_amount ?? b.amount,
+      _business: b.organization?.name ?? '',
+    })),
+    [filtered]
+  )
+  const { sortedData: sortedBills, sortConfig, requestSort } = useSortableData(
+    sortableBills as unknown as Record<string, unknown>[],
+    { key: 'due_date', direction: 'asc' }
+  )
+
   const stats = useMemo(() => {
     const totalBills = bills.length
     const paidThisMonth = bills
@@ -270,18 +285,18 @@ export default function BillsPage() {
             <table className="w-full data-table">
               <thead>
                 <tr className="border-b border-dark-800/50">
-                  <th>Vendor</th>
-                  <th>Business</th>
-                  <th>Type</th>
-                  <th className="text-right">Amount</th>
-                  <th>Due Date</th>
-                  <th>Status</th>
+                  <SortableHeader label="Vendor" sortKey="vendor_name" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Business" sortKey="_business" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Type" sortKey="bill_type" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Amount" sortKey="_amount" currentSort={sortConfig} onSort={requestSort} className="text-right" />
+                  <SortableHeader label="Due Date" sortKey="due_date" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Status" sortKey="status" currentSort={sortConfig} onSort={requestSort} />
                   <th className="text-center">Recurring</th>
                   <th className="text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((bill) => {
+                {(sortedBills as unknown as BillRow[]).map((bill) => {
                   const billAmount = bill.total_amount ?? bill.amount
                   const billType = bill.bill_type ?? 'other'
                   const statusInfo = statusConfig[bill.status] ?? statusConfig.pending

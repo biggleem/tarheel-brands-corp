@@ -12,6 +12,10 @@ import {
   getToastRecentSales,
   getToastYearlySales,
 } from '@/lib/supabase/queries'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { DateRangeFilter, presetRange } from '@/components/shared/date-range-filter'
+import type { DateRange } from '@/components/shared/date-range-filter'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
 import {
   DollarSign,
   ShoppingCart,
@@ -21,6 +25,7 @@ import {
   ArrowRight,
   Users,
   BarChart3,
+  Search,
 } from 'lucide-react'
 import {
   LineChart,
@@ -125,6 +130,8 @@ export default function POSPage() {
   const [dailySales, setDailySales] = useState<DailySale[]>([])
   const [recentSales, setRecentSales] = useState<DailySale[]>([])
   const [yearlySales, setYearlySales] = useState<YearlySale[]>([])
+  const [dateRange, setDateRange] = useState<DateRange>(presetRange('90d'))
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -132,8 +139,8 @@ export default function POSPage() {
       try {
         const [summ, daily, recent, yearly] = await Promise.all([
           getToastSalesSummary(),
-          getToastDailySales(),
-          getToastRecentSales(30),
+          getToastDailySales(dateRange.start, dateRange.end),
+          getToastRecentSales(60),
           getToastYearlySales(),
         ])
         if (!cancelled) {
@@ -150,7 +157,7 @@ export default function POSPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [dateRange])
 
   const chartData = useMemo(() =>
     dailySales
@@ -161,6 +168,21 @@ export default function POSPage() {
         orders: d.total_orders,
       })),
     [dailySales]
+  )
+
+  // Sortable + searchable table rows
+  const tableRows = useMemo(() =>
+    recentSales
+      .map((sale) => ({
+        ...sale,
+        avg_per_order: sale.total_orders > 0 ? sale.net_sales / sale.total_orders : 0,
+      }))
+      .filter((r) => !search || r.business_date.includes(search)),
+    [recentSales, search]
+  )
+  const { sortedData: sortedRows, sortConfig, requestSort } = useSortableData(
+    tableRows as unknown as Record<string, unknown>[],
+    { key: 'business_date', direction: 'desc' }
   )
 
   if (loading) return <POSSkeleton />
@@ -216,11 +238,14 @@ export default function POSPage() {
         />
       </div>
 
+      {/* ── Date Range Filter ── */}
+      <DateRangeFilter value={dateRange} onChange={setDateRange} options={['7d', '30d', '90d', 'this_year', 'all']} />
+
       {/* ── Charts Row ── */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Daily Sales Trend */}
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-dark-200 mb-4">Daily Sales (Last 90 Days)</h3>
+          <h3 className="text-sm font-medium text-dark-200 mb-4">Daily Sales ({dateRange.label})</h3>
           <div className="h-72">
             {chartData.length === 0 ? (
               <div className="flex items-center justify-center h-full text-sm text-dark-500">No daily sales data</div>
@@ -295,6 +320,16 @@ export default function POSPage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-dark-200">Recent Daily Sales</h3>
           <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+              <input
+                type="text"
+                placeholder="Search date..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-3 py-2 bg-dark-800/60 border border-dark-700/50 rounded-lg text-sm text-dark-200 placeholder:text-dark-500 focus:outline-none focus:border-brand-600/50 w-40"
+              />
+            </div>
             <Link
               href="/pos/customers"
               className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300 transition-colors"
@@ -315,27 +350,24 @@ export default function POSPage() {
           <table className="data-table w-full">
             <thead>
               <tr className="border-b border-dark-700/50">
-                <th>Date</th>
-                <th className="text-right">Net Sales</th>
-                <th className="text-right">Orders</th>
-                <th className="text-right">Guests</th>
-                <th className="text-right">Avg / Order</th>
+                <SortableHeader label="Date" sortKey="business_date" currentSort={sortConfig} onSort={requestSort} />
+                <SortableHeader label="Net Sales" sortKey="net_sales" currentSort={sortConfig} onSort={requestSort} className="text-right" />
+                <SortableHeader label="Orders" sortKey="total_orders" currentSort={sortConfig} onSort={requestSort} className="text-right" />
+                <SortableHeader label="Guests" sortKey="total_guests" currentSort={sortConfig} onSort={requestSort} className="text-right" />
+                <SortableHeader label="Avg / Order" sortKey="avg_per_order" currentSort={sortConfig} onSort={requestSort} className="text-right" />
               </tr>
             </thead>
             <tbody>
-              {recentSales.map((sale) => {
-                const avgPerOrder = sale.total_orders > 0 ? sale.net_sales / sale.total_orders : 0
-                return (
-                  <tr key={sale.business_date}>
-                    <td className="whitespace-nowrap">{formatDate(sale.business_date)}</td>
-                    <td className="text-right font-mono font-medium text-dark-100">{formatCurrency(sale.net_sales)}</td>
-                    <td className="text-right">{sale.total_orders}</td>
-                    <td className="text-right">{sale.total_guests}</td>
-                    <td className="text-right font-mono text-dark-300">{formatCurrency(avgPerOrder)}</td>
-                  </tr>
-                )
-              })}
-              {recentSales.length === 0 && (
+              {sortedRows.map((sale) => (
+                <tr key={sale.business_date as string}>
+                  <td className="whitespace-nowrap">{formatDate(sale.business_date as string)}</td>
+                  <td className="text-right font-mono font-medium text-dark-100">{formatCurrency(sale.net_sales as number)}</td>
+                  <td className="text-right">{sale.total_orders as number}</td>
+                  <td className="text-right">{sale.total_guests as number}</td>
+                  <td className="text-right font-mono text-dark-300">{formatCurrency(sale.avg_per_order as number)}</td>
+                </tr>
+              ))}
+              {sortedRows.length === 0 && (
                 <tr>
                   <td colSpan={5} className="text-center py-8 text-dark-500">No sales data available</td>
                 </tr>
@@ -344,8 +376,8 @@ export default function POSPage() {
           </table>
         </div>
         <div className="flex items-center justify-between text-xs text-dark-500 mt-3 px-1">
-          <span>Showing {recentSales.length} most recent days</span>
-          <span>Total: <span className="text-dark-200 font-mono">{formatCurrency(recentSales.reduce((s, r) => s + r.net_sales, 0))}</span></span>
+          <span>Showing {sortedRows.length} of {recentSales.length} days</span>
+          <span>Total: <span className="text-dark-200 font-mono">{formatCurrency(sortedRows.reduce((s, r) => s + (r.net_sales as number), 0))}</span></span>
         </div>
       </div>
     </div>

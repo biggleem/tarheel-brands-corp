@@ -7,6 +7,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'
 import { formatDate } from '@/lib/utils/formatters'
 import { getStaffDirectory } from '@/lib/supabase/queries'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
 import type { StaffProfile, StaffAssignment, Organization, EmploymentType } from '@/lib/types'
 import {
   Users,
@@ -152,6 +154,11 @@ export default function HRStaffDirectoryPage() {
     })
   }, [staffData, search, filterBusiness, filterStatus, filterType])
 
+  const { sortedData: sortedStaff, sortConfig, requestSort } = useSortableData(
+    filtered as unknown as Record<string, unknown>[],
+    { key: 'first_name', direction: 'asc' }
+  )
+
   return (
     <div className="animate-fade-in">
       <PageHeader
@@ -213,11 +220,17 @@ export default function HRStaffDirectoryPage() {
             <table className="w-full data-table">
               <thead>
                 <tr className="border-b border-dark-700/50">
-                  <th>Employee</th><th>Title</th><th className="hidden lg:table-cell">Business(es)</th><th>Type</th><th>Status</th><th className="hidden md:table-cell">Hire Date</th><th className="text-right">Actions</th>
+                  <SortableHeader label="Employee" sortKey="first_name" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Title" sortKey="employment_type" currentSort={sortConfig} onSort={requestSort} />
+                  <th className="hidden lg:table-cell">Business(es)</th>
+                  <SortableHeader label="Type" sortKey="employment_type" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Status" sortKey="is_active" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Hire Date" sortKey="hire_date" currentSort={sortConfig} onSort={requestSort} className="hidden md:table-cell" />
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((staff) => {
+                {(sortedStaff as unknown as typeof filtered).map((staff) => {
                   const assignment = getPrimaryAssignment(staff)
                   const businesses = getBusinessNames(staff)
                   const statusKey = staff.is_active ? 'active' : 'inactive'
