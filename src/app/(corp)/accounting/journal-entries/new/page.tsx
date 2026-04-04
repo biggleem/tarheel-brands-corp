@@ -47,9 +47,10 @@ const coaAccounts = [
 
 const businesses = [
   'South Armz Global Inc',
-  'Tarheel Kitchen',
-  'Tarheel Fitness',
-  'Tarheel Media',
+  'Metal Brixx Cafe',
+  'Koshu Sake Bar',
+  'Carolina Cannabar',
+  'African Coffee Reserve',
 ]
 
 interface LineItem {

@@ -44,7 +44,7 @@ const audienceOptions = [
   { id: 'all', label: 'All Customers', description: 'Send to your entire customer list', icon: Users, count: 4280 },
   { id: 'recent', label: 'Recent Visitors', description: 'Customers who visited in the last 30 days', icon: UserCheck, count: 1247 },
   { id: 'high_spend', label: 'High Spenders', description: 'Customers who spent $100+ lifetime', icon: DollarSign, count: 864 },
-  { id: 'rewards', label: 'Rewards Members', description: 'Active members of Tarheel Rewards', icon: Star, count: 1360 },
+  { id: 'rewards', label: 'Rewards Members', description: 'Active members of SA Rewards', icon: Star, count: 1360 },
   { id: 'custom', label: 'Custom Filter', description: 'Build a custom audience segment', icon: Filter, count: null },
 ]
 
@@ -53,7 +53,7 @@ const audienceOptions = [
 const businesses = [
   { value: 'all', label: 'All Businesses' },
   { value: 'brax-bbq', label: 'Brax BBQ' },
-  { value: 'tarheel-burger', label: 'Tarheel Burger' },
+  { value: 'metal-brixx', label: 'Metal Brixx Cafe' },
   { value: 'sa-smoothie', label: 'SA Smoothie' },
   { value: 'the-kickback', label: 'The Kickback' },
   { value: 'cafe-1876', label: 'Cafe 1876' },

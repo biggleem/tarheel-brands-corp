@@ -102,7 +102,7 @@ const mockTransactions: PlaidTransaction[] = [
     category: ['Food & Drink', 'Wholesale'],
     account: 'Chase ****4829',
     isCategorized: true,
-    assignedBusiness: 'Tarheel Kitchen',
+    assignedBusiness: 'Metal Brixx Cafe',
     pending: false,
   },
   {
@@ -113,7 +113,7 @@ const mockTransactions: PlaidTransaction[] = [
     category: ['Utilities', 'Electric'],
     account: 'Chase ****4829',
     isCategorized: true,
-    assignedBusiness: 'Tarheel Kitchen',
+    assignedBusiness: 'Metal Brixx Cafe',
     pending: false,
   },
   {
@@ -146,7 +146,7 @@ const mockTransactions: PlaidTransaction[] = [
     category: ['Service', 'Internet'],
     account: 'Chase ****4829',
     isCategorized: true,
-    assignedBusiness: 'Tarheel Kitchen',
+    assignedBusiness: 'Metal Brixx Cafe',
     pending: false,
   },
   {
@@ -186,9 +186,9 @@ const mockTransactions: PlaidTransaction[] = [
 
 const businesses = [
   'South Armz Global Inc',
-  'Tarheel Kitchen',
-  'Tarheel Fitness',
-  'Tarheel Media',
+  'Metal Brixx Cafe',
+  'Koshu Sake Bar',
+  'Carolina Cannabar',
 ]
 
 export default function PlaidPage() {

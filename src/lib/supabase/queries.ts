@@ -577,3 +577,50 @@ export async function getCurrentStaffProfile() {
     return null
   }
 }
+
+// ============================================================
+// Transaction Queries (Rocket Money data)
+// ============================================================
+
+export type TransactionRow = {
+  id: string; organization_id: string; transaction_date: string
+  original_date: string | null; account_type: string; account_name: string
+  account_number: string; institution_name: string; vendor_name: string
+  custom_name: string; amount: number; description: string; category: string
+  note: string; is_personal: boolean; is_tax_deductible: boolean
+  tags: string[]; source: string; organization_name: string | null
+}
+
+export type TransactionSummary = {
+  total_transactions: number; total_amount: number
+  total_income: number; total_expenses: number
+  first_date: string; last_date: string
+  categories: Array<{ category: string; count: number; total: number }>
+  monthly: Array<{ month: string; income: number; expenses: number; count: number }>
+  accounts: Array<{ account_name: string; institution_name: string; count: number; total: number }>
+}
+
+export async function getTransactions(opts?: {
+  is_personal?: boolean; category?: string
+  start_date?: string; end_date?: string; limit?: number
+}) {
+  const supabase = createClient()
+  const params: Record<string, unknown> = {}
+  if (opts?.is_personal !== undefined) params.p_is_personal = opts.is_personal
+  if (opts?.category) params.p_category = opts.category
+  if (opts?.start_date) params.p_start_date = opts.start_date
+  if (opts?.end_date) params.p_end_date = opts.end_date
+  if (opts?.limit) params.p_limit = opts.limit
+  const { data, error } = await supabase.rpc('get_corp_transactions', params)
+  if (error) { console.error('getTransactions error:', error); return [] }
+  return (data ?? []) as TransactionRow[]
+}
+
+export async function getTransactionSummary(isPersonal?: boolean) {
+  const supabase = createClient()
+  const params: Record<string, unknown> = {}
+  if (isPersonal !== undefined) params.p_is_personal = isPersonal
+  const { data, error } = await supabase.rpc('get_corp_transaction_summary', params)
+  if (error) { console.error('getTransactionSummary error:', error); return null }
+  return data as TransactionSummary | null
+}

@@ -156,9 +156,9 @@ export default function PnLReportPage() {
               className="bg-dark-900 border border-dark-700 rounded-lg text-sm text-dark-200 px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-600"
             >
               <option value="all">All - Consolidated</option>
-              <option value="kitchen">Tarheel Kitchen</option>
-              <option value="fitness">Tarheel Fitness</option>
-              <option value="media">Tarheel Media</option>
+              <option value="kitchen">Metal Brixx Cafe</option>
+              <option value="fitness">Koshu Sake Bar</option>
+              <option value="media">Carolina Cannabar</option>
             </select>
           </div>
           <div className="text-xs text-dark-500 flex items-center ml-auto">

@@ -74,7 +74,7 @@ const employeeDB: Record<string, EmployeeDetail> = {
     status: 'active', avatar_url: null,
     emergency_contact_name: 'Lisa Johnson', emergency_contact_phone: '(919) 555-0199',
     metadata: {}, created_at: '2021-06-01', updated_at: '2024-12-01',
-    businesses: ['Tarheel Subs', 'Tarheel Scoops'],
+    businesses: ['Metal Brixx Cafe', 'Koshu Sake Bar'],
   },
   'staff-002': {
     id: 'staff-002', user_id: 'u2', employee_number: 'TBC-002',
@@ -105,7 +105,7 @@ function getEmployee(staffId: string): EmployeeDetail {
     status: 'active', avatar_url: null,
     emergency_contact_name: 'Marie Carter', emergency_contact_phone: '(336) 555-0190',
     metadata: {}, created_at: '2022-08-20', updated_at: '2024-10-15',
-    businesses: ['Tarheel Subs'],
+    businesses: ['Metal Brixx Cafe'],
   }
 }
 
@@ -170,8 +170,8 @@ interface AssignmentRow {
 }
 
 const assignments: AssignmentRow[] = [
-  { id: 'a1', business: 'Tarheel Subs', role: 'Manager', start_date: '2021-06-01', is_primary: true },
-  { id: 'a2', business: 'Tarheel Scoops', role: 'Supervisor', start_date: '2023-01-15', is_primary: false },
+  { id: 'a1', business: 'Metal Brixx Cafe', role: 'Manager', start_date: '2021-06-01', is_primary: true },
+  { id: 'a2', business: 'Koshu Sake Bar', role: 'Supervisor', start_date: '2023-01-15', is_primary: false },
 ]
 
 // ---------------------------------------------------------------------------

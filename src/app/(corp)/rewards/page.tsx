@@ -71,7 +71,7 @@ export default function RewardsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title="Tarheel Rewards"
+        title="SA Rewards"
         description="Loyalty program management across all businesses"
         actions={
           <button className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors">

@@ -23,6 +23,7 @@ import {
   Menu,
   X,
   Shield,
+  Wallet,
 } from 'lucide-react'
 import { useAuth } from '@/providers/auth-provider'
 
@@ -61,6 +62,12 @@ const navigation = [
     items: [
       { label: 'Campaigns', href: '/campaigns', icon: Megaphone },
       { label: 'Marketing Plans', href: '/marketing', icon: CalendarRange },
+    ],
+  },
+  {
+    label: 'Personal',
+    items: [
+      { label: 'Personal Finance', href: '/personal', icon: Wallet },
     ],
   },
   {

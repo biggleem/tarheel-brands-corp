@@ -113,7 +113,7 @@ export default function SettingsPage() {
     { id: 'payroll', label: 'Payroll Processed', description: 'Confirmation when payroll is successfully processed', enabled: false },
     { id: 'low_stock', label: 'Low Stock Alerts', description: 'Alert when catalog items fall below reorder level', enabled: true },
     { id: 'campaign', label: 'Campaign Updates', description: 'Notify on campaign status changes', enabled: false },
-    { id: 'new_member', label: 'New Rewards Members', description: 'Alert when a new member joins Tarheel Rewards', enabled: false },
+    { id: 'new_member', label: 'New Rewards Members', description: 'Alert when a new member joins SA Rewards', enabled: false },
     { id: 'toast_import', label: 'Toast Import Complete', description: 'Notify when a Toast data import finishes', enabled: true },
   ])
 
