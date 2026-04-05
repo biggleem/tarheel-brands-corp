@@ -624,3 +624,66 @@ export async function getTransactionSummary(isPersonal?: boolean) {
   if (error) { console.error('getTransactionSummary error:', error); return null }
   return data as TransactionSummary | null
 }
+
+// ============================================================
+// Feature Page Queries (Rewards, Campaigns, Marketing, Catalog)
+// ============================================================
+
+export async function getRewardsMembers() {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_corp_rewards_members')
+  if (error) { console.error('getRewardsMembers error:', error); return [] }
+  return (data ?? []) as Array<{
+    id: string; first_name: string; last_name: string; email: string; phone: string
+    tier: string; points_balance: number; lifetime_points: number; is_active: boolean
+    enrolled_at: string; last_activity_at: string
+  }>
+}
+
+export async function getCampaigns() {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_corp_campaigns')
+  if (error) { console.error('getCampaigns error:', error); return [] }
+  return (data ?? []) as Array<{
+    id: string; name: string; campaign_type: string; channel: string; status: string
+    budget: number; spend: number; metrics: { sent: number; opened: number; clicked: number }
+    scheduled_at: string | null; sent_at: string | null; completed_at: string | null
+    created_at: string
+  }>
+}
+
+export async function getMarketingPlans() {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_corp_marketing_plans')
+  if (error) { console.error('getMarketingPlans error:', error); return [] }
+  return (data ?? []) as Array<{
+    id: string; name: string; fiscal_year: number; quarter: number; status: string
+    budget: number; allocated_budget: number; spent_budget: number
+    goals: { total: number; completed: number; items: string[] }
+    created_at: string
+  }>
+}
+
+export async function getCatalogItems() {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_corp_catalog_items')
+  if (error) { console.error('getCatalogItems error:', error); return [] }
+  return (data ?? []) as Array<{
+    id: string; name: string; sku: string; category: string; unit_of_measure: string
+    unit_cost: number; preferred_vendor: string; reorder_point: number; reorder_qty: number
+    is_active: boolean
+  }>
+}
+
+export async function getTaxDocuments(taxYear?: number) {
+  const supabase = createClient()
+  const params: Record<string, unknown> = {}
+  if (taxYear) params.p_tax_year = taxYear
+  const { data, error } = await supabase.rpc('get_corp_tax_documents', params)
+  if (error) { console.error('getTaxDocuments error:', error); return [] }
+  return (data ?? []) as Array<{
+    id: string; tax_year: number; doc_type: string; file_name: string
+    file_path: string; file_size: number; mime_type: string | null
+    status: string; created_at: string
+  }>
+}

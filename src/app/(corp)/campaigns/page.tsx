@@ -1,75 +1,113 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
-import { formatCurrency, formatDate } from '@/lib/utils/formatters'
-type CampaignType = 'email' | 'sms' | 'push' | 'social' | 'in_store' | 'rewards_bonus' | 'discount'
-type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled'
+import { formatCurrency, formatDate, formatCompactNumber } from '@/lib/utils/formatters'
+import { getCampaigns } from '@/lib/supabase/queries'
 import {
   Plus,
   Mail,
   MessageSquare,
   Share2,
   Megaphone,
-  Gift,
-  Tag,
   Bell,
-  Store,
+  FileText,
+  Layers,
   Send,
   Eye,
   MousePointerClick,
   Calendar,
   DollarSign,
-  Building2,
 } from 'lucide-react'
 
-// ── Config ─────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────
 
-const typeConfig: Record<CampaignType, { label: string; icon: typeof Mail; color: string; bg: string }> = {
-  email: { label: 'Email', icon: Mail, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  sms: { label: 'SMS', icon: MessageSquare, color: 'text-green-400', bg: 'bg-green-500/10' },
-  push: { label: 'Push', icon: Bell, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  social: { label: 'Social', icon: Share2, color: 'text-pink-400', bg: 'bg-pink-500/10' },
-  in_store: { label: 'In-Store', icon: Store, color: 'text-gold-400', bg: 'bg-gold-400/10' },
-  rewards_bonus: { label: 'Rewards Bonus', icon: Gift, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-  discount: { label: 'Discount', icon: Tag, color: 'text-red-400', bg: 'bg-red-500/10' },
-}
-
-const statusConfig: Record<CampaignStatus, { label: string; color: string; bg: string }> = {
-  draft: { label: 'Draft', color: 'text-dark-300', bg: 'bg-dark-600/20' },
-  scheduled: { label: 'Scheduled', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  active: { label: 'Active', color: 'text-green-400', bg: 'bg-green-500/10' },
-  paused: { label: 'Paused', color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-  completed: { label: 'Completed', color: 'text-dark-400', bg: 'bg-dark-700/30' },
-  cancelled: { label: 'Cancelled', color: 'text-red-400', bg: 'bg-red-500/10' },
-}
-
-type FilterTab = 'all' | CampaignStatus
-
-// ── Data ───────────────────────────────────────────────────
+type CampaignType = 'email' | 'sms' | 'push' | 'social' | 'event' | 'print' | 'multi_channel'
+type CampaignStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled'
 
 interface Campaign {
   id: string
   name: string
-  type: CampaignType
+  campaign_type: CampaignType
+  channel: string
   status: CampaignStatus
-  startDate: string
-  endDate: string
   budget: number
-  sent: number
-  opened: number
-  clicked: number
-  business: string
+  spend: number
+  metrics: { sent: number; opened: number; clicked: number }
+  scheduled_at: string | null
+  sent_at: string | null
+  completed_at: string | null
+  created_at: string
 }
 
-const campaigns: Campaign[] = []
+// ── Config ─────────────────────────────────────────────────
+
+const typeConfig: Record<CampaignType, { label: string; icon: typeof Mail; color: string; bg: string }> = {
+  email:         { label: 'Email',         icon: Mail,           color: 'text-blue-400',   bg: 'bg-blue-500/10' },
+  sms:           { label: 'SMS',           icon: MessageSquare,  color: 'text-green-400',  bg: 'bg-green-500/10' },
+  push:          { label: 'Push',          icon: Bell,           color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  social:        { label: 'Social',        icon: Share2,         color: 'text-pink-400',   bg: 'bg-pink-500/10' },
+  event:         { label: 'Event',         icon: Megaphone,      color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  print:         { label: 'Print',         icon: FileText,       color: 'text-amber-400',  bg: 'bg-amber-500/10' },
+  multi_channel: { label: 'Multi-Channel', icon: Layers,         color: 'text-cyan-400',   bg: 'bg-cyan-500/10' },
+}
+
+const statusConfig: Record<CampaignStatus, { label: string; color: string; bg: string }> = {
+  draft:     { label: 'Draft',     color: 'text-dark-300',   bg: 'bg-dark-600/20' },
+  scheduled: { label: 'Scheduled', color: 'text-blue-400',   bg: 'bg-blue-500/10' },
+  active:    { label: 'Active',    color: 'text-green-400',  bg: 'bg-green-500/10' },
+  paused:    { label: 'Paused',    color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+  completed: { label: 'Completed', color: 'text-dark-400',   bg: 'bg-dark-700/30' },
+  cancelled: { label: 'Cancelled', color: 'text-red-400',    bg: 'bg-red-500/10' },
+}
+
+type FilterTab = 'all' | CampaignStatus
+
+// ── Loading Skeleton ──────────────────────────────────────
+
+function CampaignSkeleton() {
+  return (
+    <div className="glass-card p-5 flex flex-col gap-4 animate-pulse">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="h-4 bg-dark-700/50 rounded w-3/4" />
+          <div className="flex items-center gap-2">
+            <div className="h-5 bg-dark-700/50 rounded w-16" />
+            <div className="h-5 bg-dark-700/50 rounded w-20" />
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 bg-dark-700/30 rounded w-1/2" />
+        <div className="h-3 bg-dark-700/30 rounded w-1/3" />
+      </div>
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-dark-700/30">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="text-center space-y-1">
+            <div className="h-3 bg-dark-700/30 rounded w-12 mx-auto" />
+            <div className="h-5 bg-dark-700/50 rounded w-10 mx-auto" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ── Page Component ─────────────────────────────────────────
 
 export default function CampaignsPage() {
   const [filter, setFilter] = useState<FilterTab>('all')
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getCampaigns().then((data) => {
+      setCampaigns(data as Campaign[])
+      setLoading(false)
+    })
+  }, [])
 
   const tabs: { value: FilterTab; label: string }[] = [
     { value: 'all', label: 'All' },
@@ -80,6 +118,13 @@ export default function CampaignsPage() {
   ]
 
   const filtered = filter === 'all' ? campaigns : campaigns.filter((c) => c.status === filter)
+
+  // Aggregate metrics across all campaigns
+  const totalSent = campaigns.reduce((sum, c) => sum + (c.metrics?.sent ?? 0), 0)
+  const totalOpened = campaigns.reduce((sum, c) => sum + (c.metrics?.opened ?? 0), 0)
+  const totalClicked = campaigns.reduce((sum, c) => sum + (c.metrics?.clicked ?? 0), 0)
+  const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : '0.0'
+  const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : '0.0'
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -122,40 +167,60 @@ export default function CampaignsPage() {
             <Megaphone className="w-4 h-4" />
             <span className="text-[10px] uppercase tracking-wider font-medium">Total</span>
           </div>
-          <p className="text-2xl font-bold text-dark-100">{campaigns.length}</p>
+          <p className="text-2xl font-bold text-dark-100">
+            {loading ? <span className="inline-block h-7 w-8 bg-dark-700/50 rounded animate-pulse" /> : campaigns.length}
+          </p>
         </div>
         <div className="glass-card p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
             <Send className="w-4 h-4" />
             <span className="text-[10px] uppercase tracking-wider font-medium">Sent</span>
           </div>
-          <p className="text-2xl font-bold text-dark-100">0</p>
+          <p className="text-2xl font-bold text-dark-100">
+            {loading ? <span className="inline-block h-7 w-8 bg-dark-700/50 rounded animate-pulse" /> : formatCompactNumber(totalSent)}
+          </p>
         </div>
         <div className="glass-card p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
             <Eye className="w-4 h-4" />
             <span className="text-[10px] uppercase tracking-wider font-medium">Opened</span>
           </div>
-          <p className="text-2xl font-bold text-dark-100">0%</p>
+          <p className="text-2xl font-bold text-dark-100">
+            {loading ? <span className="inline-block h-7 w-8 bg-dark-700/50 rounded animate-pulse" /> : `${openRate}%`}
+          </p>
         </div>
         <div className="glass-card p-4 text-center">
           <div className="flex items-center justify-center gap-1.5 text-dark-400 mb-1">
             <MousePointerClick className="w-4 h-4" />
             <span className="text-[10px] uppercase tracking-wider font-medium">Clicked</span>
           </div>
-          <p className="text-2xl font-bold text-dark-100">0%</p>
+          <p className="text-2xl font-bold text-dark-100">
+            {loading ? <span className="inline-block h-7 w-8 bg-dark-700/50 rounded animate-pulse" /> : `${clickRate}%`}
+          </p>
         </div>
       </div>
 
       {/* ── Campaign Cards Grid ── */}
-      {filtered.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CampaignSkeleton key={i} />
+          ))}
+        </div>
+      ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((campaign) => {
-            const typeInfo = typeConfig[campaign.type]
-            const statusInfo = statusConfig[campaign.status]
+            const typeInfo = typeConfig[campaign.campaign_type] ?? typeConfig.email
+            const statusInfo = statusConfig[campaign.status] ?? statusConfig.draft
             const TypeIcon = typeInfo.icon
-            const openRate = campaign.sent > 0 ? ((campaign.opened / campaign.sent) * 100).toFixed(1) : '0.0'
-            const clickRate = campaign.sent > 0 ? ((campaign.clicked / campaign.sent) * 100).toFixed(1) : '0.0'
+            const sent = campaign.metrics?.sent ?? 0
+            const opened = campaign.metrics?.opened ?? 0
+            const clicked = campaign.metrics?.clicked ?? 0
+            const cardOpenRate = sent > 0 ? ((opened / sent) * 100).toFixed(1) : '0.0'
+            const cardClickRate = sent > 0 ? ((clicked / sent) * 100).toFixed(1) : '0.0'
+
+            // Pick the best date to show
+            const displayDate = campaign.sent_at ?? campaign.scheduled_at ?? campaign.created_at
 
             return (
               <div key={campaign.id} className="glass-card p-5 flex flex-col gap-4">
@@ -191,16 +256,21 @@ export default function CampaignsPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs text-dark-400">
                     <Calendar className="w-3.5 h-3.5" />
-                    <span>{formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}</span>
+                    <span>{formatDate(displayDate)}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-dark-400">
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>{campaign.business}</span>
-                  </div>
+                  {campaign.channel && (
+                    <div className="flex items-center gap-2 text-xs text-dark-400">
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span className="capitalize">{campaign.channel}</span>
+                    </div>
+                  )}
                   {campaign.budget > 0 && (
                     <div className="flex items-center gap-2 text-xs text-dark-400">
                       <DollarSign className="w-3.5 h-3.5" />
-                      <span>Budget: {formatCurrency(campaign.budget)}</span>
+                      <span>
+                        Budget: {formatCurrency(campaign.budget)}
+                        {campaign.spend > 0 && ` / Spent: ${formatCurrency(campaign.spend)}`}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -212,21 +282,21 @@ export default function CampaignsPage() {
                       <Send className="w-3 h-3" />
                       <span className="text-[10px] uppercase tracking-wider">Sent</span>
                     </div>
-                    <p className="text-sm font-semibold text-dark-100">{campaign.sent.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-dark-100">{sent.toLocaleString()}</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
                       <Eye className="w-3 h-3" />
                       <span className="text-[10px] uppercase tracking-wider">Opened</span>
                     </div>
-                    <p className="text-sm font-semibold text-dark-100">{openRate}%</p>
+                    <p className="text-sm font-semibold text-dark-100">{cardOpenRate}%</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 text-dark-400 mb-0.5">
                       <MousePointerClick className="w-3 h-3" />
                       <span className="text-[10px] uppercase tracking-wider">Clicked</span>
                     </div>
-                    <p className="text-sm font-semibold text-dark-100">{clickRate}%</p>
+                    <p className="text-sm font-semibold text-dark-100">{cardClickRate}%</p>
                   </div>
                 </div>
               </div>

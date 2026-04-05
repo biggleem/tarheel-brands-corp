@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
 import { StatCard } from '@/components/shared/stat-card'
+import { SortableHeader } from '@/components/shared/sortable-header'
+import { useSortableData } from '@/lib/hooks/use-sortable-data'
+import { getRewardsMembers } from '@/lib/supabase/queries'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
 import type { RewardsTier } from '@/lib/types'
 type RewardsTransactionType = 'earn' | 'redeem' | 'adjust' | 'expire'
@@ -20,6 +23,7 @@ import {
   Medal,
   ArrowUpRight,
   ArrowDownRight,
+  Search,
 } from 'lucide-react'
 
 // ── Tier Config ────────────────────────────────────────────
@@ -31,38 +35,127 @@ const tierConfig: Record<RewardsTier, { label: string; color: string; bg: string
   platinum: { label: 'Platinum', color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: Gem },
 }
 
-// ── Data (empty until Supabase tables are populated) ─────
+// Tier ordering for sort
+const tierOrder: Record<string, number> = { bronze: 0, silver: 1, gold: 2, platinum: 3 }
 
-const tierBreakdown: { tier: RewardsTier; count: number }[] = []
+// ── Normalized member shape for the table ──────────────────
 
-const members: {
-  id: string; firstName: string; lastName: string; email: string;
-  tier: RewardsTier; pointsBalance: number; lifetimePoints: number;
-  lastVisit: string; joinedAt: string;
-}[] = []
-
-const recentTransactions: {
-  id: string; memberName: string; type: RewardsTransactionType;
-  points: number; description: string; date: string;
-}[] = []
+interface MemberRow {
+  id: string
+  name: string
+  firstName: string
+  lastName: string
+  email: string
+  tier: RewardsTier
+  tierRank: number
+  pointsBalance: number
+  lifetimePoints: number
+  lastVisit: string
+  joinedAt: string
+  isActive: boolean
+}
 
 // ── Page Component ─────────────────────────────────────────
 
 export default function RewardsPage() {
   const [loading, setLoading] = useState(true)
+  const [members, setMembers] = useState<MemberRow[]>([])
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
-    // Simulates data fetch — swap with real Supabase query later
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
+    async function load() {
+      try {
+        const raw = await getRewardsMembers()
+        const rows: MemberRow[] = raw.map((m) => ({
+          id: m.id,
+          name: `${m.first_name} ${m.last_name}`,
+          firstName: m.first_name,
+          lastName: m.last_name,
+          email: m.email,
+          tier: m.tier as RewardsTier,
+          tierRank: tierOrder[m.tier] ?? 0,
+          pointsBalance: m.points_balance,
+          lifetimePoints: m.lifetime_points,
+          lastVisit: m.last_activity_at,
+          joinedAt: m.enrolled_at,
+          isActive: m.is_active,
+        }))
+        setMembers(rows)
+      } catch (err) {
+        console.error('Failed to load rewards members:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
   }, [])
 
+  // ── Derived stats ──
+  const totalMembers = members.length
+  const activeMembers = members.filter((m) => m.isActive).length
+  const totalPoints = members.reduce((sum, m) => sum + m.lifetimePoints, 0)
+  const totalBalance = members.reduce((sum, m) => sum + m.pointsBalance, 0)
+
+  // ── Tier breakdown ──
+  const tierBreakdown = useMemo(() => {
+    const counts: Partial<Record<RewardsTier, number>> = {}
+    members.forEach((m) => {
+      counts[m.tier] = (counts[m.tier] ?? 0) + 1
+    })
+    return (['gold', 'silver', 'bronze', 'platinum'] as RewardsTier[])
+      .filter((t) => (counts[t] ?? 0) > 0)
+      .map((t) => ({ tier: t, count: counts[t]! }))
+  }, [members])
+
+  // ── Search filter ──
+  const filtered = useMemo(() => {
+    if (!search.trim()) return members
+    const q = search.toLowerCase()
+    return members.filter(
+      (m) =>
+        m.name.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q)
+    )
+  }, [members, search])
+
+  // ── Sorting ──
+  const { sortedData, sortConfig, requestSort } = useSortableData(
+    filtered as unknown as Record<string, unknown>[],
+    { key: 'name', direction: 'asc' }
+  )
+
+  // ── Recent transactions placeholder (no RPC yet) ──
+  const recentTransactions: {
+    id: string; memberName: string; type: RewardsTransactionType;
+    points: number; description: string; date: string;
+  }[] = []
+
+  // ── Loading skeleton ──
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-dark-400">Loading rewards data...</p>
+      <div className="space-y-6 animate-fade-in">
+        <div className="h-10 w-64 bg-dark-800/60 rounded-lg animate-pulse" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="glass-card p-5 space-y-3">
+              <div className="h-4 w-24 bg-dark-800/60 rounded animate-pulse" />
+              <div className="h-8 w-16 bg-dark-800/60 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <div className="glass-card p-5 space-y-4">
+          <div className="h-4 w-32 bg-dark-800/60 rounded animate-pulse" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-20 bg-dark-800/40 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+        <div className="glass-card p-5 space-y-3">
+          <div className="h-4 w-24 bg-dark-800/60 rounded animate-pulse" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-10 bg-dark-800/40 rounded animate-pulse" />
+          ))}
         </div>
       </div>
     )
@@ -85,25 +178,25 @@ export default function RewardsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Members"
-          value="0"
+          value={totalMembers.toLocaleString()}
           icon={Users}
           iconColor="text-blue-400"
         />
         <StatCard
           title="Active Members"
-          value="0"
+          value={activeMembers.toLocaleString()}
           icon={Award}
           iconColor="text-green-400"
         />
         <StatCard
-          title="Points Issued (MTD)"
-          value="0"
+          title="Lifetime Points"
+          value={totalPoints.toLocaleString()}
           icon={TrendingUp}
           iconColor="text-brand-400"
         />
         <StatCard
-          title="Points Redeemed (MTD)"
-          value="0"
+          title="Points Balance"
+          value={totalBalance.toLocaleString()}
           icon={Gift}
           iconColor="text-gold-400"
         />
@@ -117,8 +210,7 @@ export default function RewardsPage() {
             {tierBreakdown.map(({ tier, count }) => {
               const config = tierConfig[tier]
               const TierIcon = config.icon
-              const total = tierBreakdown.reduce((acc, t) => acc + t.count, 0)
-              const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'
+              const pct = totalMembers > 0 ? ((count / totalMembers) * 100).toFixed(1) : '0.0'
               return (
                 <div
                   key={tier}
@@ -150,29 +242,48 @@ export default function RewardsPage() {
 
       {/* ── Members Table ── */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-medium text-dark-200 mb-4">Members</h3>
-        {members.length > 0 ? (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h3 className="text-sm font-medium text-dark-200">
+            Members{filtered.length !== members.length ? ` (${filtered.length} of ${members.length})` : ` (${members.length})`}
+          </h3>
+          <div className="relative max-w-xs w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or email..."
+              className="w-full pl-9 pr-3 py-2 bg-dark-800/60 border border-dark-700/50 rounded-lg text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 focus:border-brand-500/50 transition-colors"
+            />
+          </div>
+        </div>
+        {sortedData.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="data-table w-full">
               <thead>
                 <tr className="border-b border-dark-700/50">
-                  <th>Name</th>
+                  <SortableHeader label="Name" sortKey="name" currentSort={sortConfig} onSort={requestSort} />
                   <th>Email</th>
-                  <th>Tier</th>
-                  <th className="text-right">Points Balance</th>
+                  <SortableHeader label="Tier" sortKey="tierRank" currentSort={sortConfig} onSort={requestSort} />
+                  <SortableHeader label="Points Balance" sortKey="pointsBalance" currentSort={sortConfig} onSort={requestSort} className="text-right" />
                   <th className="text-right">Lifetime Points</th>
-                  <th>Last Visit</th>
+                  <SortableHeader label="Last Visit" sortKey="lastVisit" currentSort={sortConfig} onSort={requestSort} />
                   <th>Joined</th>
                 </tr>
               </thead>
               <tbody>
-                {members.map((member) => {
+                {(sortedData as unknown as MemberRow[]).map((member) => {
                   const config = tierConfig[member.tier]
                   const TierIcon = config.icon
                   return (
-                    <tr key={member.id}>
+                    <tr key={member.id} className={cn(!member.isActive && 'opacity-50')}>
                       <td className="text-dark-100 font-medium whitespace-nowrap">
                         {member.firstName} {member.lastName}
+                        {!member.isActive && (
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/10 text-red-400">
+                            Inactive
+                          </span>
+                        )}
                       </td>
                       <td className="text-dark-300 text-xs">{member.email}</td>
                       <td>
@@ -200,6 +311,14 @@ export default function RewardsPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : search.trim() ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="p-3 rounded-xl bg-dark-800/60 mb-3">
+              <Search className="w-6 h-6 text-dark-500" />
+            </div>
+            <p className="text-sm font-medium text-dark-300">No members match &ldquo;{search}&rdquo;</p>
+            <p className="text-xs text-dark-500 mt-1">Try a different name or email address</p>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-center">

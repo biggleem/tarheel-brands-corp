@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
+import { getMarketingPlans } from '@/lib/supabase/queries'
 type PlanStatus = 'draft' | 'active' | 'completed' | 'archived'
 import {
   Plus,
@@ -41,21 +42,20 @@ const channelConfig: Record<string, { color: string; bg: string }> = {
   Event: { color: 'text-purple-400', bg: 'bg-purple-500/10' },
 }
 
-// ── Mock Data ──────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────
 
-interface MockPlan {
+interface MappedPlan {
   id: string
   name: string
-  business: string
-  quarter: number
+  quarter: string
   year: number
   status: PlanStatus
   budget: number
+  allocatedBudget: number
+  spentBudget: number
   goalsTotal: number
   goalsCompleted: number
 }
-
-const plans: MockPlan[] = []
 
 interface CalendarEvent {
   id: string
@@ -75,13 +75,71 @@ function getMonthDays(year: number, month: number) {
   return { firstDay, daysInMonth }
 }
 
+// ── Skeleton Loader ────────────────────────────────────────
+
+function PlanCardSkeleton() {
+  return (
+    <div className="glass-card p-5 flex flex-col gap-4 animate-pulse">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0 space-y-2">
+          <div className="h-4 w-40 bg-dark-700 rounded" />
+          <div className="h-5 w-16 bg-dark-700 rounded" />
+        </div>
+        <div className="h-4 w-16 bg-dark-700 rounded" />
+      </div>
+      <div className="space-y-2">
+        <div className="h-3.5 w-32 bg-dark-700 rounded" />
+        <div className="h-3.5 w-28 bg-dark-700 rounded" />
+      </div>
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="h-3 w-24 bg-dark-700 rounded" />
+          <div className="h-3 w-20 bg-dark-700 rounded" />
+        </div>
+        <div className="w-full h-2 bg-dark-800 rounded-full" />
+      </div>
+    </div>
+  )
+}
+
 // ── Page Component ─────────────────────────────────────────
 
 export default function MarketingPage() {
+  const [plans, setPlans] = useState<MappedPlan[]>([])
+  const [loading, setLoading] = useState(true)
   const [calMonth, setCalMonth] = useState(2) // March (0-indexed)
   const [calYear, setCalYear] = useState(2026)
   const { firstDay, daysInMonth } = getMonthDays(calYear, calMonth)
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        const raw = await getMarketingPlans()
+        if (cancelled) return
+        const mapped: MappedPlan[] = raw.map((p) => ({
+          id: p.id,
+          name: p.name,
+          quarter: `Q${p.quarter}`,
+          year: p.fiscal_year,
+          status: p.status as PlanStatus,
+          budget: p.budget,
+          allocatedBudget: p.allocated_budget,
+          spentBudget: p.spent_budget,
+          goalsTotal: p.goals.total,
+          goalsCompleted: p.goals.completed,
+        }))
+        setPlans(mapped)
+      } catch (err) {
+        console.error('Failed to load marketing plans:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
 
   function getEventsForDay(day: number) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -112,7 +170,13 @@ export default function MarketingPage() {
       />
 
       {/* ── Plans Grid ── */}
-      {plans.length > 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <PlanCardSkeleton />
+          <PlanCardSkeleton />
+          <PlanCardSkeleton />
+        </div>
+      ) : plans.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {plans.map((plan) => {
             const statusInfo = statusConfig[plan.status]
@@ -135,17 +199,17 @@ export default function MarketingPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs text-dark-400 whitespace-nowrap">Q{plan.quarter} {plan.year}</span>
+                  <span className="text-xs text-dark-400 whitespace-nowrap">{plan.quarter} {plan.year}</span>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-xs text-dark-400">
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>{plan.business}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-dark-400">
                     <DollarSign className="w-3.5 h-3.5" />
                     <span>Budget: {formatCurrency(plan.budget)}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-dark-400">
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    <span>Spent: {formatCurrency(plan.spentBudget)} of {formatCurrency(plan.allocatedBudget)} allocated</span>
                   </div>
                 </div>
 

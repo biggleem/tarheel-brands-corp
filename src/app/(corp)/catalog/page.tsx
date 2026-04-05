@@ -1,21 +1,19 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils/cn'
 import { PageHeader } from '@/components/shared/page-header'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
+import { getCatalogItems } from '@/lib/supabase/queries'
 type POStatus = 'draft' | 'submitted' | 'confirmed' | 'shipped' | 'received' | 'cancelled'
 import {
   Plus,
   Search,
   Package,
   ShoppingCart,
-  AlertTriangle,
   Image as ImageIcon,
   Truck,
   FileText,
-  MoreHorizontal,
   Eye,
   CheckCircle2,
   Clock,
@@ -35,20 +33,20 @@ const poStatusConfig: Record<POStatus, { label: string; color: string; bg: strin
   cancelled: { label: 'Cancelled', color: 'text-red-400', bg: 'bg-red-500/10', icon: XCircle },
 }
 
-// ── Mock Data ──────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────
 
-interface MockCatalogItem {
+interface CatalogItem {
   id: string
   name: string
   sku: string
   category: string
-  unitCost: number
-  currentStock: number
-  reorderLevel: number
-  supplier: string
+  unit_of_measure: string
+  unit_cost: number
+  preferred_vendor: string
+  reorder_point: number
+  reorder_qty: number
+  is_active: boolean
 }
-
-const catalogItems: MockCatalogItem[] = []
 
 interface MockPO {
   id: string
@@ -67,6 +65,15 @@ const purchaseOrders: MockPO[] = []
 export default function CatalogPage() {
   const [activeTab, setActiveTab] = useState<'catalog' | 'orders'>('catalog')
   const [searchQuery, setSearchQuery] = useState('')
+  const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getCatalogItems().then((items) => {
+      setCatalogItems(items as CatalogItem[])
+      setLoading(false)
+    })
+  }, [])
 
   const filteredItems = searchQuery
     ? catalogItems.filter(
@@ -74,7 +81,7 @@ export default function CatalogPage() {
           item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.supplier.toLowerCase().includes(searchQuery.toLowerCase())
+          item.preferred_vendor.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : catalogItems
 
@@ -135,7 +142,24 @@ export default function CatalogPage() {
           </div>
 
           {/* Catalog Grid */}
-          {catalogItems.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="glass-card p-4 flex flex-col gap-3 animate-pulse">
+                  <div className="w-full h-28 bg-dark-800/60 rounded-lg" />
+                  <div className="space-y-2">
+                    <div className="h-4 bg-dark-800/60 rounded w-3/4" />
+                    <div className="h-3 bg-dark-800/40 rounded w-1/3" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="h-3 bg-dark-800/40 rounded" />
+                    <div className="h-3 bg-dark-800/40 rounded" />
+                    <div className="h-3 bg-dark-800/40 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : catalogItems.length === 0 ? (
             <div className="glass-card p-16 text-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl bg-dark-800/60 flex items-center justify-center">
@@ -150,9 +174,7 @@ export default function CatalogPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filteredItems.map((item) => {
-                  const belowReorder = item.currentStock < item.reorderLevel
-                  return (
+                {filteredItems.map((item) => (
                     <div key={item.id} className="glass-card p-4 flex flex-col gap-3">
                       {/* Image Placeholder */}
                       <div className="w-full h-28 bg-dark-800/60 rounded-lg flex items-center justify-center">
@@ -165,6 +187,13 @@ export default function CatalogPage() {
                         <p className="text-[10px] font-mono text-dark-500 mt-0.5">{item.sku}</p>
                       </div>
 
+                      {/* Status Badge */}
+                      {!item.is_active && (
+                        <span className="inline-flex items-center self-start px-2 py-0.5 rounded text-[10px] font-medium bg-dark-700/50 text-dark-400">
+                          Inactive
+                        </span>
+                      )}
+
                       {/* Details */}
                       <div className="space-y-1.5 text-xs">
                         <div className="flex items-center justify-between">
@@ -173,34 +202,27 @@ export default function CatalogPage() {
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-dark-400">Unit Cost</span>
-                          <span className="text-dark-200 font-mono">{formatCurrency(item.unitCost)}</span>
+                          <span className="text-dark-200 font-mono">{formatCurrency(item.unit_cost)}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-dark-400">Stock</span>
-                          <span className={cn('font-mono font-medium', belowReorder ? 'text-red-400' : 'text-dark-200')}>
-                            {item.currentStock}
-                          </span>
+                          <span className="text-dark-400">UOM</span>
+                          <span className="text-dark-200">{item.unit_of_measure}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-dark-400">Reorder Qty</span>
+                          <span className="text-dark-200 font-mono">{item.reorder_qty}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-dark-400">Reorder Level</span>
-                          <span className="text-dark-300 font-mono">{item.reorderLevel}</span>
+                          <span className="text-dark-300 font-mono">{item.reorder_point}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-dark-400">Supplier</span>
-                          <span className="text-dark-200 truncate ml-2">{item.supplier}</span>
+                          <span className="text-dark-200 truncate ml-2">{item.preferred_vendor}</span>
                         </div>
                       </div>
-
-                      {/* Low Stock Warning */}
-                      {belowReorder && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20">
-                          <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-                          <span className="text-[10px] font-medium text-red-400">Below reorder level</span>
-                        </div>
-                      )}
                     </div>
-                  )
-                })}
+                ))}
               </div>
 
               {filteredItems.length === 0 && (
