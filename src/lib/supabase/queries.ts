@@ -687,3 +687,61 @@ export async function getTaxDocuments(taxYear?: number) {
     status: string; created_at: string
   }>
 }
+
+// ============================================================
+// Crowdfunding Queries (Public)
+// ============================================================
+
+export type CrowdfundCampaign = {
+  id: string; title: string; slug: string; description: string; short_description: string
+  cover_image_url: string | null; category: string; goal_amount: number; raised_amount: number
+  backer_count: number; status: string; start_date: string; end_date: string
+  equity_token_symbol: string | null; equity_per_dollar: number
+  tiers: Array<{ name: string; amount: number; description: string; limit: number; claimed: number }>
+  updates: Array<{ date: string; title: string; content: string }>
+  organization_name: string | null; recent_pledges?: Array<{ backer_name: string; amount: number; created_at: string; is_anonymous: boolean }>
+}
+
+export type CrowdfundStats = {
+  total_campaigns: number; active_campaigns: number; funded_campaigns: number
+  total_raised: number; total_backers: number; total_goal: number
+}
+
+export async function getCrowdfundCampaigns(category?: string, status?: string) {
+  const supabase = createClient()
+  const params: Record<string, unknown> = {}
+  if (category) params.p_category = category
+  if (status) params.p_status = status
+  const { data, error } = await supabase.rpc('get_crowdfund_campaigns', params)
+  if (error) { console.error('getCrowdfundCampaigns error:', error); return [] }
+  return (data ?? []) as CrowdfundCampaign[]
+}
+
+export async function getCrowdfundCampaignBySlug(slug: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_crowdfund_campaign_by_slug', { p_slug: slug })
+  if (error) { console.error('getCrowdfundCampaignBySlug error:', error); return null }
+  return data as CrowdfundCampaign | null
+}
+
+export async function createCrowdfundPledge(params: {
+  campaign_slug: string; name: string; email: string; amount: number
+  tier_name?: string; message?: string; anonymous?: boolean
+}) {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('create_crowdfund_pledge', {
+    p_campaign_slug: params.campaign_slug,
+    p_name: params.name, p_email: params.email, p_amount: params.amount,
+    p_tier_name: params.tier_name ?? null, p_message: params.message ?? null,
+    p_anonymous: params.anonymous ?? false,
+  })
+  if (error) throw error
+  return data as { pledge_id: string; tokens: number; campaign: string }
+}
+
+export async function getCrowdfundStats() {
+  const supabase = createClient()
+  const { data, error } = await supabase.rpc('get_crowdfund_stats')
+  if (error) { console.error('getCrowdfundStats error:', error); return null }
+  return data as CrowdfundStats | null
+}
